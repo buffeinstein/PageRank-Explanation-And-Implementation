@@ -1,20 +1,21 @@
 # Pagerank Project
 
-In this project, you will create a simple search engine for the website <https://www.lawfareblog.com>.
-This website provides legal analysis on US national security issues.
+In this project, I created a simple search engine for the website <https://www.lawfareblog.com>, which provides legal analysis on US national security issues.
 
-**Due date:** Sunday, 18 September at midnight
+This project is an exploration of the math concepts in the *Deeper Inside Pagerank* paper, added in this repo. The paper picks up after Sergey Brin and Larry Page's original 1998 paper that details the algorithm that remains "the heart of [Google’s] software ... and continues to provide the basis for all of [their] web search tools,” as cited directly from the Google web page, http://www.google.com/technology/index.html.
 
-**Computation:**
-This project has low computational requirements.
-You are not required to complete it on the lambda server (although you are welcome to if you'd like).
+The relevant math for my code is sections 3 and 5. If this is your first time with Markov Chains, I recommend the first three videos in this short and simple youtube series: https://www.youtube.com/playlist?list=PLM8wYQRetTxBkdvBtz-gw8b9lcVkdXQKV
+
+To summarize the work below: we're creating a web graph of sites as nodes and hyperlinks to create edges. Then, we create the corresponding adjacency matrix (ie P in the paper) and find its eigenvector (the stationary vector of a Markov chain). This stationary vector represents the distribution of the probability of visiting a site after an infinite random walk along the Markov chain. The sites with the highest probability of being visited are most likely to be useful to the user, and therefore, will be returned first! 
 
 ## Background
 
-**Data:**
+**Some intuition about the data:**  
 
-The `data` folder contains two files that store example "web graphs".
-The file `small.csv.gz` contains the example graph from the *Deeper Inside Pagerank* paper.
+The `data` folder contains two files that store example "web graphs". In these graphs, each site is a node, and has outlink edges to sites/nodes that it has hyperlinked. 
+
+The file `small.csv.gz`contains an example web graph, taken from the *Deeper Inside Pagerank* paper, which is part of this repo. 
+
 This is a small graph, so we can manually inspect the contents of this file with the following command:
 ```
 $ zcat data/small.csv.gz
@@ -31,16 +32,11 @@ source,target
 6,4
 ```
 
-> **Recall:**
-> The `cat` terminal command outputs the contents of a file to stdout, and the `zcat` command first decompressed a gzipped file and then outputs the decompressed contents.
-
-As you can see, the graph is stored as a CSV file.
-The first line is a header,
-and each subsequent line stores a single edge in the graph.
+As you can see, the graph is stored as a CSV file, with each line describing an edge in the graph. 
 The first column contains the source node of the edge and the second column the target node.
 The file is assumed to be sorted alphabetically.
 
-The second data file `lawfareblog.csv.gz` contains the link structure for the lawfare blog.
+The second data file `lawfareblog.csv.gz` contains the lawfare blog's web graph! 
 Let's take a look at the first 10 of these lines:
 ```
 $ zcat data/lawfareblog.csv.gz | head
@@ -58,29 +54,28 @@ www.lawfareblog.com/,www.lawfareblog.com/topic/international-law-loac
 You can see that in this file, the node names are URLs.
 Semantically, each line corresponds to an HTML `<a>` tag that is contained in the source webpage and links to the target webpage.
 
-We can use the following command to count the total number of links in the file:
+We can use the following command to count the total number of links/edges in the file:
 ```
 $ zcat data/lawfareblog.csv.gz | wc -l
 1610789
 ```
-Since every link corresponds to a non-zero entry in the `P` matrix,
-this is also the value of `nnz(P)`.
-(Technically, we should subtract 1 from this value since the `wc -l` command also counts the header line, not just the data lines.)
+Every link corresponds to a non-zero entry in the `P` matrix - this is also the value of `nnz(P)`.
+(we subtract 1 from this value since the `wc -l` command also counts the header line, not just the data lines.)
 
-To get the dimensions of `P`, we need to count the total number of nodes in the graph.
+To get the dimensions of `P`, we need to count the total number of nodes in the graph, ie the number of unique links.
 The following command achieves this by: decompressing the file, extracting the first column, removing all duplicate lines, then counting the results.
 ```
 $ zcat data/lawfareblog.csv.gz | cut -f1 -d, | uniq | wc -l
 25761
 ```
 This matrix is large enough that computing matrix products for dense matrices takes several minutes on a single CPU.
-Fortunately, however, the matrix is very sparse.
+Fortunately, however, the matrix is very sparse! This is because a single website will only contain a few hyperlinks - for every wesbite it does NOT link, the entry in that column will be 0!
 The following python code computes the fraction of entries in the matrix with non-zero values:
 ```
 >>> 1610788 / (25760**2)
 0.0024274297384360172
 ```
-Thus, by using sparse matrix operations, we will be able to speed up the code significantly.
+Thus, by using PyTorch's sparse matrix operations, we will be able to speed up the code significantly!
 
 **Code:**
 
@@ -94,7 +89,7 @@ $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --search_query=co
 > It will take about 10 seconds to load and parse the data files.
 > All the other computation happens essentially instantly.
 
-Currently, the pagerank of the nodes is not currently being calculated correctly, and so the webpages are returned in an arbitrary order.
+If you were to comment out the "WebGraph.power_method" function, then the outputted webpages would be returned in an arbitrary order. The following code shows how to c
 Your task in this assignment will be to fix these calculations in order to have the most important results (i.e. highest pagerank results) returned first.
 
 ## Task 1: the power method
