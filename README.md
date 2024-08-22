@@ -93,9 +93,7 @@ If you were to comment out the "WebGraph.power_method" function, then the output
 
 ## Task 1: the power method
 
-**Part 1:**
-
-First, let's implement something that ranks all sites without a specific search - this is a feature that is useful in ranking sites' credibility.  
+**Part 1:** Let's first implement something that ranks all sites without a specific search. 
 
 IMPLEMENTATION CODE HERE AND DISCUSS IT 
 
@@ -188,11 +186,7 @@ INFO:root:rank=9 pagerank=1.1463e-03 url=www.lawfareblog.com/israel-iran-syria-c
 ```
 
 **Part 3:**
-
-The webgraph of lawfareblog.com (i.e. the `P` matrix) naturally contains a lot of interesting structure. 
-For example, essentially all pages on the domain have links to the root page <https://lawfareblog.com/> and other "non-article" pages like <https://www.lawfareblog.com/topics> and <https://www.lawfareblog.com/subscribe-lawfare>.
-These pages therefore have a large pagerank.
-We can get a list of the pages with the largest pagerank by running
+Let's improve our algorithm to filter for the blog's articles, instead of including sites such the subscribe site. Our algorithm highly ranks pages with many in-links - without a specific user query,these are the highest ranked sites:
 
 ```
 $ python3 pagerank.py --data=data/lawfareblog.csv.gz
@@ -208,6 +202,8 @@ INFO:root:rank=8 pagerank=2.8741e-01 url=www.lawfareblog.com/upcoming-events
 INFO:root:rank=9 pagerank=2.8741e-01 url=www.lawfareblog.com/our-comments-policy
 ```
 
+Essentially all pages on the domain have links to the root page <https://lawfareblog.com/> and other "non-article" pages like <https://www.lawfareblog.com/topics> and <https://www.lawfareblog.com/subscribe-lawfare>.
+These pages therefore have a large pagerank.
 Most of these pages are not very interesting, however, because they are not articles,
 and usually when we are performing a web search, we only want articles.
 
@@ -217,13 +213,13 @@ The answer is to modify the `P` matrix by removing all links to non-article page
 This raises another question: How do we know if a link is a non-article page?
 Unfortunately, this is a hard question to answer with 100% accuracy,
 but there are many methods that get us most of the way there.
-One easy to implement method is to compute what's called the "in-link ratio" of each node (i.e. the total number of edges with the node as a target divided by the total number of nodes),
-and then remove nodes from the search results with too-high of a ratio.
-The intuition is that non-article pages often appear in the menu of a webpage, and so have links from almost all of the other webpages;
-but article-webpages are unlikely to appear on a menu and so will only have a small number of links from other webpages.
-The `--filter_ratio` parameter causes the code to remove all pages that have an in-link ratio larger than the provided value.
 
-Using this option, we can estimate the most important articles on the domain with the following command:
+One easy-to-implement method is to filter nodes using their "in-link ratio" - the total number of edges with the node as a target (ie this site itself is hyperlinked in other sites) divided by the total number of nodes. 
+Non-article pages often appear in the menu of a webpage, and therefore have links from almost all of the other webpages - thus, their in-link ratio is very high. 
+
+The `--filter_ratio` parameter causes the code to remove all pages that have an in-link ratio larger than a value that we choose. 
+
+Let's use the filter ratio parameter, with a chosen ratio cap of 0.2:
 ```
 $ python3 pagerank.py --data=data/lawfareblog.csv.gz --filter_ratio=0.2
 INFO:root:rank=0 pagerank=3.4696e-01 url=www.lawfareblog.com/trump-asks-supreme-court-stay-congressional-subpeona-tax-returns
@@ -237,7 +233,7 @@ INFO:root:rank=7 pagerank=1.4957e-01 url=www.lawfareblog.com/todays-headlines-an
 INFO:root:rank=8 pagerank=1.4367e-01 url=www.lawfareblog.com/cyberlaw-podcast-mistrusting-google
 INFO:root:rank=9 pagerank=1.4240e-01 url=www.lawfareblog.com/lawfare-podcast-bonus-edition-gordon-sondland-vs-committee-no-bull
 ```
-Notice that the urls in this list look much more like articles than the urls in the previous list.
+These sites look much more like articles than in the previous list!
 
 When Google calculates their `P` matrix for the web,
 they use a similar (but much more complicated) process to modify the `P` matrix in order to reduce spam results.
@@ -300,7 +296,7 @@ INFO:root:rank=9 pagerank=1.6020e-02 url=www.lawfareblog.com/water-wars-sinking-
 Which of these rankings is better is entirely subjective,
 and the only way to know if you have the "best" alpha for your application is to try several variations and see what is best.
 If large alphas are good for your application, you can see that there is a trade-off between quality answers and algorithmic runtime.
-We'll be exploring this trade-off more formally in class over the rest of the semester.
+I'll be exploring this trade-off more formally in my next CS143 projects!
 
 ## Task 2: the personalization vector
 
