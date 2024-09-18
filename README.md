@@ -28,8 +28,9 @@ www.lawfareblog.com/,www.lawfareblog.com/documents-related-mueller-investigation
 www.lawfareblog.com/,www.lawfareblog.com/topic/international-law-loac
 ```
 In this file, the node names are URLs.
-Semantically, each line corresponds to an HTML `<a>` tag that is contained in the source webpage and links to the target webpage. If we were to draw this graph, we'd put a node `www.lawfareblog.com/` and draw arrows out to all of these other nodes in the second column. 
+Semantically, each line corresponds to an HTML `<a>` tag that is contained in the source webpage and links to the target webpage. If we were to draw this graph, we'd put a node `www.lawfareblog.com/` and draw arrows out to all of these other nodes in the second column. like so: 
 
+![graph representation of the first 4 links](https://github.com/[buffeinstein]/[PageRank-Explanation-And-Implementation]/blob/[main]/first_4_graph_representation.jpeg?raw=true)
 
 We can use the following command to count the total number of links/edges in the file:
 ```
