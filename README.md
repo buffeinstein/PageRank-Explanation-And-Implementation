@@ -12,31 +12,7 @@ To summarize the work below: we're creating a web graph of sites as nodes and hy
 
 **Some intuition about the data:**  
 
-The `data` folder contains two files that store example "web graphs". In these graphs, each site is a node, and has outlink edges to sites/nodes that it has hyperlinked. 
-
-The file `small.csv.gz`contains the example web graph in *Deeper Inside Pagerank* paper.
-
-This is a small graph, so we can manually inspect the contents of this file with the following command:
-```
-$ zcat data/small.csv.gz
-source,target
-1,2
-1,3
-3,1
-3,2
-3,5
-4,5
-4,6
-5,6
-5,4
-6,4
-```
-
-The graph is stored as a CSV file, with each line describing an edge in the graph. 
-The first column contains the source node of the edge and the second column the target node.
-The file is assumed to be sorted alphabetically.
-
-The second data file `lawfareblog.csv.gz` contains the lawfare blog's web graph! 
+The data file `lawfareblog.csv.gz` contains the lawfare blog's web graph! 
 Let's take a look at the first 10 of these lines:
 ```
 $ zcat data/lawfareblog.csv.gz | head
@@ -52,7 +28,7 @@ www.lawfareblog.com/,www.lawfareblog.com/documents-related-mueller-investigation
 www.lawfareblog.com/,www.lawfareblog.com/topic/international-law-loac
 ```
 In this file, the node names are URLs.
-Semantically, each line corresponds to an HTML `<a>` tag that is contained in the source webpage and links to the target webpage.
+Semantically, each line corresponds to an HTML `<a>` tag that is contained in the source webpage and links to the target webpage. If we were to draw this graph, we'd put a node `www.lawfareblog.com/` and draw arrows out to all of these other nodes in the second column. 
 
 We can use the following command to count the total number of links/edges in the file:
 ```
@@ -77,7 +53,7 @@ The following python code computes the fraction of entries in the matrix with no
 ```
 Thus, by using PyTorch's sparse matrix operations, we will be able to speed up the code significantly.
 
-**Code:**
+**Code Overview:**
 
 The `pagerank.py` file contains code for loading the graph CSV files and searching through their nodes for key phrases.
 For example, you can perform a search for all nodes (i.e. urls) that mention the string `corona` with the following command:
@@ -93,7 +69,7 @@ If you were to comment out the "WebGraph.power_method" function, then the output
 
 
 
-## Task 0: Code Set-Up
+## Task 0: Code Set-Up, Line-By-Line explanation!
 I'm going to go line-by-line through the code now.  
 
 ```
@@ -103,11 +79,17 @@ This code is loading a popular pre-trained model for generating word embeddings,
 
 Now, let's talk about the WebGraph class - the core of this code. 
 
-The `_init_` method is creating the WebGraph from the data. 
+The `_init_` method is creating the WebGraph that I explained intuitively above from the data. I'm going to show exactly how we parse that, and exactly how we create sparse matrices from it. 
 
 ```
-self.url_dict = {}
+self.url_dict = {} #an instance varaible
+```
+This is creating an instance variable - a dictionary specific to each WebGraph object, used to store the mapping of URLs to numeric indices so that we can call some page the ith page instead of referring to it by its whole URL. 
+```
 indices = []
+```
+from collections import defaultdict
+target_counts = defaultdict(lambda: 0)
 ```
 
 
