@@ -73,6 +73,7 @@ If you were to comment out the "WebGraph.power_method" function, then the output
 I'm going to go line-by-line through the code now.  
 
 ```
+#actual code 
 vectors = gensim.downloader.load('glove-twitter-50')
 ```
 This code is loading a popular pre-trained model for generating word embeddings, which are a way of representing words as numerical vectors in a high-dimensional space. These vectors capture the semantic meaning of words, where words with similar meanings tend to have similar vector representations. For example, a search for "Covid" will have a similar output to if we searched "pandemic" when we search with "Covid" as a vector instead of a direct word match! We'll get to why this is useful later as well. 
@@ -82,11 +83,26 @@ Now, let's talk about the WebGraph class - the core of this code.
 The `_init_` method is creating the WebGraph that I explained intuitively above from the data. I'm going to show exactly how we parse that, and exactly how we create sparse matrices from it. 
 
 ```
-self.url_dict = {} #an instance varaible
+#actual code 
+self.url_dict = {}
 ```
-This is creating an instance variable - a dictionary specific to each WebGraph object, used to store the mapping of URLs to numeric indices so that we can call some page the ith page instead of referring to it by its whole URL. 
+This is creating an instance variable - we want this to be a dictionary specific to each WebGraph object, used to store the mapping of URLs to numeric indices so that we can call some page the ith page instead of referring to it by its whole URL. An example: 
+
 ```
-indices = []
+#an example 
+self.url_dict = {
+    'www.example.com': 0,
+    'www.test.com': 1,
+    'www.page.com': 2
+}
+```
+For the above dictionary, we want to get just the indices as well. If there are three websites, then:
+```
+#an example
+indices = [0, 1, 2]
+```
+
+So now let's start using our blog's info to actually build the `self.url_dict` and `indices` in this way. 
 ```
 from collections import defaultdict
 target_counts = defaultdict(lambda: 0)
