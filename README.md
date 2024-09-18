@@ -30,6 +30,7 @@ www.lawfareblog.com/,www.lawfareblog.com/topic/international-law-loac
 In this file, the node names are URLs.
 Semantically, each line corresponds to an HTML `<a>` tag that is contained in the source webpage and links to the target webpage. If we were to draw this graph, we'd put a node `www.lawfareblog.com/` and draw arrows out to all of these other nodes in the second column. 
 
+
 We can use the following command to count the total number of links/edges in the file:
 ```
 $ zcat data/lawfareblog.csv.gz | wc -l
