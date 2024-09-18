@@ -91,6 +91,27 @@ $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --search_query=co
 
 If you were to comment out the "WebGraph.power_method" function, then the outputted webpages would be returned in an arbitrary order. The following code uses the *Deeper Inside Pagerank* equation 5.1 to calculate which sites are the most important (i.e. have the highest pagerank results) and are returned first.
 
+
+
+## Task 0: Code Set-Up
+I'm going to go line-by-line through the code now.  
+
+```
+vectors = gensim.downloader.load('glove-twitter-50')
+```
+This code is loading a popular pre-trained model for generating word embeddings, which are a way of representing words as numerical vectors in a high-dimensional space. These vectors capture the semantic meaning of words, where words with similar meanings tend to have similar vector representations. For example, a search for "Covid" will have a similar output to if we searched "pandemic" when we search with "Covid" as a vector instead of a direct word match! We'll get to why this is useful later as well. 
+
+Now, let's talk about the WebGraph class - the core of this code. 
+
+The `_init_` method is creating the WebGraph from the data. 
+
+```
+self.url_dict = {}
+indices = []
+```
+
+
+
 ## Task 1: the power method
 
 **Part 1:** Let's first implement something that ranks all sites without a specific search. 
