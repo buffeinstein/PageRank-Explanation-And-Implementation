@@ -31,11 +31,14 @@ In this file, the node names are URLs.
 Semantically, each line corresponds to an HTML `<a>` tag that is contained in the source webpage and links to the target webpage. If we were to draw the graph for the first 4 of these entries, we'd get this: 
 
 <img src="first_4_graph_representation.jpeg" alt="the graph for the first 4" width="300"/>
+
 We can use the following command to count the total number of links/edges in the file:
+
 ```
 $ zcat data/lawfareblog.csv.gz | wc -l
 1610789
 ```
+
 Every link corresponds to a non-zero entry in the `P` matrix - this is also the value of `nnz(P)`.
 (we subtract 1 from this value since the `wc -l` command also counts the header line, not just the data lines.)
 
@@ -69,7 +72,6 @@ $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --search_query=co
 If you were to comment out the "WebGraph.power_method" function, then the outputted webpages would be returned in an arbitrary order. The following code uses the *Deeper Inside Pagerank* equation 5.1 to calculate which sites are the most important (i.e. have the highest pagerank results) and are returned first.
 
 
-
 ## Task 0: Code Set-Up, Line-By-Line explanation!
 I'm going to go line-by-line through the code now.  
 
@@ -86,8 +88,11 @@ The `_init_` method is creating the WebGraph that I explained intuitively above 
 ```
 #actual code 
 self.url_dict = {}
+indices = []
+from collections import defaultdict
+target_counts = defaultdict(lambda: 0)
 ```
-This is creating an instance variable - we want this to be a dictionary specific to each WebGraph object, used to store the mapping of URLs to numeric indices so that we can call some page the ith page instead of referring to it by its whole URL. An example: 
+The `self.url_dict` is creating an instance variable - a dictionary specific to each WebGraph object QQ, used to store the mapping of URLs to numeric indices so that we can call some page the ith page instead of referring to it by its whole URL. An example: 
 
 ```
 #an example 
@@ -97,19 +102,25 @@ self.url_dict = {
     'www.page.com': 2
 }
 ```
-For the above dictionary, we want to get just the indices as well. If there are three websites, then:
+Then, we'll have a list of all of the websites if we just call them by their corresponding index. If there are three websites, then we'll have all their new names in this list:
 ```
 #an example
 indices = [0, 1, 2]
+#instead of ['www.example.com', 'www.test.com', 'www.page.com']
+```
+With an easier way to reference each site, we can now start to count how many times a website has been the target, i.e another site has hyperlinked it within itself. If website 1 has links to both 2 and 3, and 2 has links to 1, and 3 links none, then 
+```
+target_counts = {
+    1: 1,
+    2: 1,
+    3: 1}
 ```
 
-So now let's start using our blog's info to actually build the `self.url_dict` and `indices` in this way. 
+Now that we know what those are, let's start using our law blog's info to actually build the corresponding `self.url_dict`, `indices`, and `target_counts`
 ```
-from collections import defaultdict
-target_counts = defaultdict(lambda: 0)
+ # loop through filename to extract the indices
+
 ```
-
-
 
 ## Task 1: the power method
 
