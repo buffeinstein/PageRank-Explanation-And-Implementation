@@ -79,9 +79,24 @@ I'm going to go line-by-line through the code now.
 #actual code 
 vectors = gensim.downloader.load('glove-twitter-50')
 ```
-This code is loading a popular pre-trained model for generating word embeddings, which are a way of representing words as numerical vectors in a high-dimensional space. These vectors capture the semantic meaning of words, where words with similar meanings tend to have similar vector representations. For example, a search for "Covid" will have a similar output to if we searched "pandemic" when we search with "Covid" as a vector instead of a direct word match! We'll get to why this is useful later as well. 
+I'll actually get to this one later lol. 
+<!--- This code is loading a popular pre-trained model for generating word embeddings, which are a way of representing words as numerical vectors in a high-dimensional space. These vectors capture the semantic meaning of words, where words with similar meanings tend to have similar vector representations. For example, a search for "Covid" will have a similar output to if we searched "pandemic" when we search with "Covid" as a vector instead of a direct word match! We'll get to why this is useful later as well. --->
 
-Now, let's talk about the WebGraph class - the core of this code. 
+
+Let's talk about the WebGraph class - the core of this code. 
+
+```
+class WebGraph():
+
+    def __init__(self, filename, max_nnz=None, filter_ratio=None):
+        '''
+        Initializes the WebGraph from a file.
+        The file should be a gzipped csv file.
+        Each line contains two entries: the source and target corresponding to a single web link.
+        This code assumes that the file is sorted on the source column.
+        '''
+
+```
 
 The `_init_` method is creating the WebGraph that I explained intuitively above from the data. I'm going to show exactly how we parse that, and exactly how we create sparse matrices from it. 
 
@@ -110,16 +125,44 @@ indices = [0, 1, 2]
 ```
 With an easier way to reference each site, we can now start to count how many times a website has been the target, i.e another site has hyperlinked it within itself. If website 1 has links to both 2 and 3, and 2 has links to 1, and 3 links none, then 
 ```
+#an example
 target_counts = {
     1: 1,
     2: 1,
-    3: 1}
+    3: 1
+}
 ```
 
-Now that we know what those are, let's start using our law blog's info to actually build the corresponding `self.url_dict`, `indices`, and `target_counts`
-```
- # loop through filename to extract the indices
+Now that we know what those are, let's start using our law blog's info to actually build the corresponding `self.url_dict`, `indices`, and `target_counts`. 
 
+Real quick - for the below code, `max_nnz` is a parameter that is passed by the users! 
+```
+#actual code
+        # loop through filename to extract the indices
+        logging.debug('computing indices')
+
+        #reading the csv file 
+        with gzip.open(filename,newline='',mode='rt') as f:
+
+            # i will be the number of the row in the file
+            # row will be the row itself 
+            for i,row in enumerate(csv.DictReader(f)):
+
+                #creating a limit of rows that it does this for if user specifies a value for max_nnz   
+                if max_nnz is not None and i>max_nnz:
+                    break
+
+                #this code skips over urls with a lot of slashes - these tend to be directories of links instead of sites themselves!
+                import re
+                regex = re.compile(r'.*((/$)|(/.*/)).*') #
+                if regex.match(row['source']) or regex.match(row['target']):
+                    continue
+
+                #builds the target_counts dict! 
+                source = self._url_to_index(row['source'])
+                target = self._url_to_index(row['target'])
+                target_counts[target] += 1
+                indices.append([source,target])
 ```
 
 ## Task 1: the power method
