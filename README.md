@@ -30,8 +30,7 @@ www.lawfareblog.com/,www.lawfareblog.com/topic/international-law-loac
 In this file, the node names are URLs.
 Semantically, each line corresponds to an HTML `<a>` tag that is contained in the source webpage and links to the target webpage. If we were to draw the graph for the first 4 of these entries, we'd get this: 
 
-![graph representation of the first 4 links](https://github.com/[buffeinstein]/[PageRank-Explanation-And-Implementation]/blob/[main]/first_4_graph_representation.jpeg?raw=true)
-
+<img src="first_4_graph_representation.jpeg" alt="the graph for the first 4" width="300"/>
 We can use the following command to count the total number of links/edges in the file:
 ```
 $ zcat data/lawfareblog.csv.gz | wc -l
