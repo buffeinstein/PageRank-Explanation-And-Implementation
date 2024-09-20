@@ -73,17 +73,11 @@ If you were to comment out the "WebGraph.power_method" function, then the output
 
 
 ## Task 0: Code Set-Up, Line-By-Line explanation!
-I'm going to go line-by-line through the code now.  
+I'm going to go line-by-line through the code now. This is mostly for me because I forget how my code works after like 2 seconds. 
 
-```
-#actual code 
-vectors = gensim.downloader.load('glove-twitter-50')
-```
-I'll actually get to this one later lol. 
-<!--- This code is loading a popular pre-trained model for generating word embeddings, which are a way of representing words as numerical vectors in a high-dimensional space. These vectors capture the semantic meaning of words, where words with similar meanings tend to have similar vector representations. For example, a search for "Covid" will have a similar output to if we searched "pandemic" when we search with "Covid" as a vector instead of a direct word match! We'll get to why this is useful later as well. --->
+First, we have to make it a little easier to make nodes out of websites. The URLS are superrrr long, lets just number them and reference them by their number! 
 
-
-Let's talk about the WebGraph class - the core of this code. 
+Let's create some variables, ` self.url_dict`, `indices`, `target_counts`. 
 
 ```
 class WebGraph():
@@ -96,18 +90,21 @@ class WebGraph():
         This code assumes that the file is sorted on the source column.
         '''
 
+        #actual code 
+        self.url_dict = {}
+        indices = []
+        from collections import defaultdict
+        target_counts = defaultdict(lambda: 0)
 ```
+We want the `self.url_dict` as an instance variable - a dictionary specific to each WebGraph object QQ, used to store the mapping of URLs to its new name as a number. Let's say our CSV file is this: 
 
-The `_init_` method is creating the WebGraph that I explained intuitively above from the data. I'm going to show exactly how we parse that, and exactly how we create sparse matrices from it. 
+| source                | target                |
+|-----------------------|-----------------------|
+| www.example.com        | www.target.com        |
+| www.example.com        | www.another.com       |
+| www.another.com        | www.example.com       |
 
-```
-#actual code 
-self.url_dict = {}
-indices = []
-from collections import defaultdict
-target_counts = defaultdict(lambda: 0)
-```
-The `self.url_dict` is creating an instance variable - a dictionary specific to each WebGraph object QQ, used to store the mapping of URLs to numeric indices so that we can call some page the ith page instead of referring to it by its whole URL. An example: 
+Then we want our `self.url_dict` to be a way to refer to our websites with a number instead of its full URL, like so: 
 
 ```
 #an example 
@@ -117,25 +114,26 @@ self.url_dict = {
     'www.page.com': 2
 }
 ```
-Then, we'll have a list of all of the websites if we just call them by their corresponding index. If there are three websites, then we'll have all their new names in this list:
+
+With an easier way to reference each site, we can treat these numbers as the names of the nodes, and can now start to collect a list of the edges. If website 1 has links to both 2 and 3, and 2 has links to 1, and 3 links none, then our `indices` will be:
 ```
 #an example
-indices = [0, 1, 2]
+indices = [[0, 1], [0, 2], [2, 1]]
 #instead of ['www.example.com', 'www.test.com', 'www.page.com']
 ```
-With an easier way to reference each site, we can now start to count how many times a website has been the target, i.e another site has hyperlinked it within itself. If website 1 has links to both 2 and 3, and 2 has links to 1, and 3 links none, then 
+We can also start to count how many times a website has been the target, i.e another site has hyperlinked it within itself. If website 1 has links to both 2 and 3, and 2 has links to 1, and 3 links none, then `target_counts` would be:
 ```
 #an example
 target_counts = {
+    0: 1,
     1: 1,
-    2: 1,
-    3: 1
+    2: 1
 }
 ```
+Now that we know what those are supposed to look like, let's start using our law blog's info to actually build the corresponding `self.url_dict`, `indices`, and `target_counts`. 
 
-Now that we know what those are, let's start using our law blog's info to actually build the corresponding `self.url_dict`, `indices`, and `target_counts`. 
+We open up the file and will now go through each row individually in our `for` loop, and use `i` as our counter of what row we are on in case we want to pass in a `max_nnz` that limits how many rows go up to. 
 
-Real quick - for the below code, `max_nnz` is a parameter that is passed by the users! 
 ```
 #actual code
         # loop through filename to extract the indices
@@ -143,7 +141,6 @@ Real quick - for the below code, `max_nnz` is a parameter that is passed by the 
 
         #reading the csv file 
         with gzip.open(filename,newline='',mode='rt') as f:
-
             # i will be the number of the row in the file
             # row will be the row itself 
             for i,row in enumerate(csv.DictReader(f)):
@@ -151,19 +148,54 @@ Real quick - for the below code, `max_nnz` is a parameter that is passed by the 
                 #creating a limit of rows that it does this for if user specifies a value for max_nnz   
                 if max_nnz is not None and i>max_nnz:
                     break
+```
 
+Let's talk about this code later - not using this for now 
+```
                 #this code skips over urls with a lot of slashes - these tend to be directories of links instead of sites themselves!
                 import re
                 regex = re.compile(r'.*((/$)|(/.*/)).*') #
                 if regex.match(row['source']) or regex.match(row['target']):
                     continue
+```
 
-                #builds the target_counts dict! 
+Ok, now we are finally building the `target_counts` and `indices`. This is using the WebGraph method `._url_to_index` from below, which is self-explanatory. Recall that our for loop is working on one row at a time. The line `source = self._url_to_index(row['source'])` is just using CSV's indexing format to create/set the variable `source` and `target`  to the left and right columns of the row our `for` loop is working on. With that set, we can update our `target_counts` and `indices`.
+```
                 source = self._url_to_index(row['source'])
                 target = self._url_to_index(row['target'])
                 target_counts[target] += 1
                 indices.append([source,target])
 ```
+
+Let's talk about this block of code later; assume that filter_ratio is None for now. 
+```
+     # remove urls with too many in-links
+        if filter_ratio is not None:
+            new_indices = []
+            for source,target in indices:
+                if target_counts[target] < filter_ratio*len(self.url_dict):
+                    new_indices.append([source,target])
+            indices = new_indices
+```
+
+Yay! We've stored the nodes in `self._url_dict`, have the edges of our graph in `indices`, and the in-link number in 'target_counts`. Now, we can start computing the transition matrix. 
+
+```
+        # compute the values that correspond to the indices variable
+        logging.debug('computing values')
+        values = []
+        last_source = indices[0][0]
+        last_i = 0
+        for i,(source,target) in enumerate(indices+[(None,None)]):
+            if source==last_source:
+                pass
+            else:
+                total_links = i-last_i
+                values.extend([1/total_links]*total_links)
+                last_source = source
+                last_i = i
+```
+
 
 ## Task 1: the power method
 
