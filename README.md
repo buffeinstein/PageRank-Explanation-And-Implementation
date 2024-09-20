@@ -100,7 +100,7 @@ We want the `self.url_dict` as an instance variable - a dictionary specific to e
 
 | source                | target                |
 |-----------------------|-----------------------|
-| www.example.com        | www.target.com        |
+| www.example.com        | www.test.com        |
 | www.example.com        | www.another.com       |
 | www.another.com        | www.example.com       |
 
@@ -111,15 +111,15 @@ Then we want our `self.url_dict` to be a way to refer to our websites with a num
 self.url_dict = {
     'www.example.com': 0,
     'www.test.com': 1,
-    'www.page.com': 2
+    'www.another.com': 2
 }
 ```
 
-With an easier way to reference each site, we can treat these numbers as the names of the nodes, and can now start to collect a list of the edges. If website 1 has links to both 2 and 3, and 2 has links to 1, and 3 links none, then our `indices` will be:
+With an easier way to reference each site, we can treat these numbers as the names of the nodes, and can now start to collect a list of the edges. If website 0 has links to both 1 and 2, and 2 has links to 1, then our `indices` will be:
 ```
 #an example
-indices = [[0, 1], [0, 2], [2, 1]]
-#instead of ['www.example.com', 'www.test.com', 'www.page.com']
+indices = [[0, 1], [0, 2], [2, 0]]
+#instead of ['www.example.com', 'www.test.com', 'www.another.com']
 ```
 We can also start to count how many times a website has been the target, i.e another site has hyperlinked it within itself. If website 1 has links to both 2 and 3, and 2 has links to 1, and 3 links none, then `target_counts` would be:
 ```
