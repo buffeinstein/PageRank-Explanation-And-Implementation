@@ -245,21 +245,41 @@ We're going to create a function with these inputs:
 
 where 
 
-Let's talk about the `v` personalization vector later right now, and just assume that `v` is none. 
+Let's just grab the dimension of the square matrix `P` real quick and store it in `n`: 
+```            
         with torch.no_grad():
             n = self.P.shape[0]
+```
 
+
+ 
+Let's pass in the `v` personalization later - for now, all of the $n$ entries of this vector are going to be $\frac{1}{n}$. We're going to use matrix multiplication instead of matrix/vector multiplication, so we're going to use the `torch.unsqueeze` to add the dimension needed for matrix multiplication. 
+
+```
             # create variables if none given
             if v is None:
                 v = torch.Tensor([1/n]*n)
+                # v = tensor([0.3333, 0.3333, 0.3333])
                 v = torch.unsqueeze(v,1)
-            v /= torch.norm(v)
+                # v = tensor([[0.3333],
+                #            [0.3333],
+                #            [0.3333]])
 
+            # this line is redudant if we are creating v as above, as it will already be normalized.
+            # this line specifically is to make sure that the user-passed personalization vector will work with the rest of the code 
+            v /= torch.norm(v)
+```
+
+Pretty similar set-up for `x0`. 
+```
             if x0 is None:
                 x0 = torch.Tensor([1/(math.sqrt(n))]*n)
                 x0 = torch.unsqueeze(x0,1)
             x0 /= torch.norm(x0)
+```
 
+OMGG here we go! 
+```
             # main loop
             xprev = x0
             x = xprev.detach().clone()
