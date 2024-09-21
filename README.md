@@ -185,11 +185,12 @@ Sparse matrices assume that most of the numbers in the matrix is 0, and so it on
 However, sparse matrices take in the indices with all of the row-coordinates in one list, and the y-coordinates in the other. Thankfully, all that takes is a quick transpose! Storing that transpose in `i`, we get 
 
 ```
+#an example
 i = [[0, 0, 2],   # Sources
      [1, 2, 0]]   # Targets
 ```
 
-Amazing. We will store this `i` in the `torch.LongTensor` for compability reasons, so our final code for creating indices:
+We will store this `i` in the `torch.LongTensor` for compability reasons, so our final code for creating indices:
 ```
         i = torch.LongTensor(indices).t()
 ```
@@ -316,42 +317,62 @@ OMGG here we go!
 
 IMPLEMENTATION CODE HERE AND DISCUSS IT 
 
-Let's test it with the small file - for my implementation, I get the following output.
+Let's test it!! 
+
+The command to run is 
 ```
-$ python3 pagerank.py --data=data/small.csv.gz --verbose
-DEBUG:root:computing indices
-DEBUG:root:computing values
-DEBUG:root:i=0 residual=2.5629e-01
-DEBUG:root:i=1 residual=1.1841e-01
-DEBUG:root:i=2 residual=7.0701e-02
-DEBUG:root:i=3 residual=3.1815e-02
-DEBUG:root:i=4 residual=2.0497e-02
-DEBUG:root:i=5 residual=1.0108e-02
-DEBUG:root:i=6 residual=6.3716e-03
-DEBUG:root:i=7 residual=3.4228e-03
-DEBUG:root:i=8 residual=2.0879e-03
-DEBUG:root:i=9 residual=1.1750e-03
-DEBUG:root:i=10 residual=7.0131e-04
-DEBUG:root:i=11 residual=4.0321e-04
-DEBUG:root:i=12 residual=2.3800e-04
-DEBUG:root:i=13 residual=1.3812e-04
-DEBUG:root:i=14 residual=8.1083e-05
-DEBUG:root:i=15 residual=4.7251e-05
-DEBUG:root:i=16 residual=2.7704e-05
-DEBUG:root:i=17 residual=1.6164e-05
-DEBUG:root:i=18 residual=9.4778e-06
-DEBUG:root:i=19 residual=5.5066e-06
-DEBUG:root:i=20 residual=3.2042e-06
-DEBUG:root:i=21 residual=1.8612e-06
-DEBUG:root:i=22 residual=1.1283e-06
-DEBUG:root:i=23 residual=6.1907e-07
-INFO:root:rank=0 pagerank=6.6270e-01 url=4
-INFO:root:rank=1 pagerank=5.2179e-01 url=6
-INFO:root:rank=2 pagerank=4.1434e-01 url=5
-INFO:root:rank=3 pagerank=2.3175e-01 url=2
-INFO:root:rank=4 pagerank=1.8590e-01 url=3
-INFO:root:rank=5 pagerank=1.6917e-01 url=1
+python3 pagerank.py --data=data/small.csv.gz --verbose
 ```
+
+And this is the output! 
+
+```
+$ python3 pagerank.py --data=data/lawfareblog.csv.gz
+INFO:root:rank=0 pagerank=2.8741e-01 url=www.lawfareblog.com/lawfare-job-board
+INFO:root:rank=1 pagerank=2.8741e-01 url=www.lawfareblog.com/masthead
+INFO:root:rank=2 pagerank=2.8741e-01 url=www.lawfareblog.com/litigation-documents-related-appointment-matthew-whitaker-acting-attorney-general
+INFO:root:rank=3 pagerank=2.8741e-01 url=www.lawfareblog.com/documents-related-mueller-investigation
+INFO:root:rank=4 pagerank=2.8741e-01 url=www.lawfareblog.com/topics
+INFO:root:rank=5 pagerank=2.8741e-01 url=www.lawfareblog.com/about-lawfare-brief-history-term-and-site
+INFO:root:rank=6 pagerank=2.8741e-01 url=www.lawfareblog.com/snowden-revelations
+INFO:root:rank=7 pagerank=2.8741e-01 url=www.lawfareblog.com/support-lawfare
+INFO:root:rank=8 pagerank=2.8741e-01 url=www.lawfareblog.com/upcoming-events
+INFO:root:rank=9 pagerank=2.8741e-01 url=www.lawfareblog.com/our-comments-policy
+```
+
+We see that our algorithm highly ranks pages with many in-links - without a specific user query, some of the highest-ranked sites are boring non-article pages such the root page <https://lawfareblog.com/>, or a table of contents <https://www.lawfareblog.com/topics>, or a subscribe page <https://www.lawfareblog.com/subscribe-lawfare>.
+These pages therefore have a large pagerank, but usually when we are performing a web search, we only want articles.
+
+This raises the question: How can we find the most important articles filtering out the non-article pages? The answer is to modify the `P` matrix by removing all links to non-article pages.One easy-to-implement method is to filter nodes by using their "in-link ratio" - the total number of edges with the node as a target (ie this site itself is hyperlinked in other sites) divided by the total number of nodes. Non-article pages often appear in the menu of a webpage, and therefore have links from almost all of the other webpages - thus, their in-link ratio is very high. 
+
+The `--filter_ratio` parameter causes the code to remove all pages that have an in-link ratio larger than a value that we choose. 
+
+Let's use the filter ratio parameter, with a chosen ratio cap of 0.2:
+```
+$ python3 pagerank.py --data=data/lawfareblog.csv.gz --filter_ratio=0.2
+INFO:root:rank=0 pagerank=3.4696e-01 url=www.lawfareblog.com/trump-asks-supreme-court-stay-congressional-subpeona-tax-returns
+INFO:root:rank=1 pagerank=2.9521e-01 url=www.lawfareblog.com/livestream-nov-21-impeachment-hearings-0
+INFO:root:rank=2 pagerank=2.9040e-01 url=www.lawfareblog.com/opening-statement-david-holmes
+INFO:root:rank=3 pagerank=1.5179e-01 url=www.lawfareblog.com/lawfare-podcast-ben-nimmo-whack-mole-game-disinformation
+INFO:root:rank=4 pagerank=1.5099e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1963
+INFO:root:rank=5 pagerank=1.5099e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1964
+INFO:root:rank=6 pagerank=1.5071e-01 url=www.lawfareblog.com/lawfare-podcast-week-was-impeachment
+INFO:root:rank=7 pagerank=1.4957e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1962
+INFO:root:rank=8 pagerank=1.4367e-01 url=www.lawfareblog.com/cyberlaw-podcast-mistrusting-google
+INFO:root:rank=9 pagerank=1.4240e-01 url=www.lawfareblog.com/lawfare-podcast-bonus-edition-gordon-sondland-vs-committee-no-bull
+```
+These sites look much more like articles than in the previous list!
+
+When Google calculates their `P` matrix for the web,
+they use a similar (but much more complicated) process to modify the `P` matrix in order to reduce spam results.
+The exact formula they use is a jealously guarded secret that they update continuously.
+
+In the case above, notice that we have accidentally removed the blog's most popular article (<www.lawfareblog.com/snowden-revelations>).
+The blog editors believed that Snowden's revelations about NSA spying are so important that they directly put a link to the article on the menu.
+So every single webpage in the domain links to the Snowden article,
+and our "anti-spam" `--filter-ratio` argument removed this article from the list.
+In general, it is a challenging open problem to remove spam from pagerank results,
+and all current solutions rely on careful human tuning and still have lots of false positives and false negatives.
 
 > **NOTE:**
 > The `--verbose` flag causes all of the lines beginning with `DEBUG` to be printed.
@@ -404,66 +425,7 @@ INFO:root:rank=8 pagerank=1.1788e-03 url=www.lawfareblog.com/iran-shoots-down-us
 INFO:root:rank=9 pagerank=1.1463e-03 url=www.lawfareblog.com/israel-iran-syria-clash-and-law-use-force
 ```
 
-**Part 3:**
-Let's improve our algorithm to filter for the blog's articles, instead of including sites such the subscribe site. Our algorithm highly ranks pages with many in-links - without a specific user query,these are the highest ranked sites:
 
-```
-$ python3 pagerank.py --data=data/lawfareblog.csv.gz
-INFO:root:rank=0 pagerank=2.8741e-01 url=www.lawfareblog.com/lawfare-job-board
-INFO:root:rank=1 pagerank=2.8741e-01 url=www.lawfareblog.com/masthead
-INFO:root:rank=2 pagerank=2.8741e-01 url=www.lawfareblog.com/litigation-documents-related-appointment-matthew-whitaker-acting-attorney-general
-INFO:root:rank=3 pagerank=2.8741e-01 url=www.lawfareblog.com/documents-related-mueller-investigation
-INFO:root:rank=4 pagerank=2.8741e-01 url=www.lawfareblog.com/topics
-INFO:root:rank=5 pagerank=2.8741e-01 url=www.lawfareblog.com/about-lawfare-brief-history-term-and-site
-INFO:root:rank=6 pagerank=2.8741e-01 url=www.lawfareblog.com/snowden-revelations
-INFO:root:rank=7 pagerank=2.8741e-01 url=www.lawfareblog.com/support-lawfare
-INFO:root:rank=8 pagerank=2.8741e-01 url=www.lawfareblog.com/upcoming-events
-INFO:root:rank=9 pagerank=2.8741e-01 url=www.lawfareblog.com/our-comments-policy
-```
-
-Essentially all pages on the domain have links to the root page <https://lawfareblog.com/> and other "non-article" pages like <https://www.lawfareblog.com/topics> and <https://www.lawfareblog.com/subscribe-lawfare>.
-These pages therefore have a large pagerank.
-Most of these pages are not very interesting, however, because they are not articles,
-and usually when we are performing a web search, we only want articles.
-
-This raises the question: How can we find the most important articles filtering out the non-article pages?
-The answer is to modify the `P` matrix by removing all links to non-article pages.
-
-This raises another question: How do we know if a link is a non-article page?
-Unfortunately, this is a hard question to answer with 100% accuracy,
-but there are many methods that get us most of the way there.
-
-One easy-to-implement method is to filter nodes using their "in-link ratio" - the total number of edges with the node as a target (ie this site itself is hyperlinked in other sites) divided by the total number of nodes. 
-Non-article pages often appear in the menu of a webpage, and therefore have links from almost all of the other webpages - thus, their in-link ratio is very high. 
-
-The `--filter_ratio` parameter causes the code to remove all pages that have an in-link ratio larger than a value that we choose. 
-
-Let's use the filter ratio parameter, with a chosen ratio cap of 0.2:
-```
-$ python3 pagerank.py --data=data/lawfareblog.csv.gz --filter_ratio=0.2
-INFO:root:rank=0 pagerank=3.4696e-01 url=www.lawfareblog.com/trump-asks-supreme-court-stay-congressional-subpeona-tax-returns
-INFO:root:rank=1 pagerank=2.9521e-01 url=www.lawfareblog.com/livestream-nov-21-impeachment-hearings-0
-INFO:root:rank=2 pagerank=2.9040e-01 url=www.lawfareblog.com/opening-statement-david-holmes
-INFO:root:rank=3 pagerank=1.5179e-01 url=www.lawfareblog.com/lawfare-podcast-ben-nimmo-whack-mole-game-disinformation
-INFO:root:rank=4 pagerank=1.5099e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1963
-INFO:root:rank=5 pagerank=1.5099e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1964
-INFO:root:rank=6 pagerank=1.5071e-01 url=www.lawfareblog.com/lawfare-podcast-week-was-impeachment
-INFO:root:rank=7 pagerank=1.4957e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1962
-INFO:root:rank=8 pagerank=1.4367e-01 url=www.lawfareblog.com/cyberlaw-podcast-mistrusting-google
-INFO:root:rank=9 pagerank=1.4240e-01 url=www.lawfareblog.com/lawfare-podcast-bonus-edition-gordon-sondland-vs-committee-no-bull
-```
-These sites look much more like articles than in the previous list!
-
-When Google calculates their `P` matrix for the web,
-they use a similar (but much more complicated) process to modify the `P` matrix in order to reduce spam results.
-The exact formula they use is a jealously guarded secret that they update continuously.
-
-In the case above, notice that we have accidentally removed the blog's most popular article (<www.lawfareblog.com/snowden-revelations>).
-The blog editors believed that Snowden's revelations about NSA spying are so important that they directly put a link to the article on the menu.
-So every single webpage in the domain links to the Snowden article,
-and our "anti-spam" `--filter-ratio` argument removed this article from the list.
-In general, it is a challenging open problem to remove spam from pagerank results,
-and all current solutions rely on careful human tuning and still have lots of false positives and false negatives.
 
 **Part 4:**
 
@@ -517,7 +479,7 @@ and the only way to know if you have the "best" alpha for your application is to
 If large alphas are good for your application, you can see that there is a trade-off between quality answers and algorithmic runtime.
 I'll be exploring this trade-off more formally in my next CS143 projects!
 
-## Task 2: the personalization vector
+## The personalization vector! 
 
 The most interesting applications of pagerank involve the personalization vector.
 Implement the `WebGraph.make_personalization_vector` function so that it outputs a personalization vector tuned for the input query.
