@@ -253,7 +253,7 @@ Let's just grab the dimension of the square matrix `P` real quick and store it i
 
 
  
-Let's pass in the `v` personalization later - for now, all of the $n$ entries of this vector are going to be $\frac{1}{n}$. We're going to use matrix multiplication instead of matrix/vector multiplication, so we're going to use the `torch.unsqueeze` to add the dimension needed for matrix multiplication. 
+Let's pass in the `v` personalization later - for now, all of the $n$ entries of this vector are going to be $\frac{1}{n}$. We're going to use matrix multiplication instead of matrix/vector multiplication, so we're going to use `torch.unsqueeze`  to add the dimension needed for matrix multiplication. 
 
 ```
             # create variables if none given
@@ -270,13 +270,15 @@ Let's pass in the `v` personalization later - for now, all of the $n$ entries of
             v /= torch.norm(v)
 ```
 
-Pretty similar set-up for `x0`. 
+Pretty similar set-up for `x0`. The user may also pass in an `x0` if there is a specific starting point, but otherwise, it will be assumed that there is an equal probabibility of starting on any site. 
 ```
             if x0 is None:
                 x0 = torch.Tensor([1/(math.sqrt(n))]*n)
                 x0 = torch.unsqueeze(x0,1)
             x0 /= torch.norm(x0)
 ```
+
+Now, we need to make the $\textbf{a}$ vector to make $P$ stochastic and all. We know that every row that we've entered numbers into is already stochastic - thus, we just need to check for rows of all 0s. 
 
 OMGG here we go! 
 ```
