@@ -115,13 +115,13 @@ self.url_dict = {
 }
 ```
 
-With an easier way to reference each site, we can treat these numbers as the names of the nodes, and can now start to collect a list of the edges. If website 0 has links to both 1 and 2, and 2 has links to 1, then our `indices` will be:
+With an easier way to reference each site, we can treat these numbers as the names of the nodes, and can now start to collect a list of the edges. If website 0 has links to both 1 and 2, and 2 has links to 0, then our `indices` will be:
 ```
 #an example
 indices = [[0, 1], [0, 2], [2, 0]]
 #instead of ['www.example.com', 'www.test.com', 'www.another.com']
 ```
-We can also start to count how many times a website has been the target, i.e another site has hyperlinked it within itself. If website 1 has links to both 2 and 3, and 2 has links to 1, and 3 links none, then `target_counts` would be:
+We can also start to count how many times a website has been the target, i.e another site has hyperlinked it within itself. 
 ```
 #an example
 target_counts = {
