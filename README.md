@@ -150,7 +150,7 @@ We open up the file and will now go through each row individually in our `for` l
                     break
 ```
 
-Let's talk about this code later - not using this for now 
+This code filters out links with lots of slashes, which usually is directories. 
 ```
                 #this code skips over urls with a lot of slashes - these tend to be directories of links instead of sites themselves!
                 import re
@@ -178,8 +178,7 @@ Let's talk about this block of code later; assume that filter_ratio is None for 
             indices = new_indices
 ```
 
-Yay! We've stored the nodes in `self._url_dict`, have the edges of our graph in `indices`, and the in-link number in 'target_counts`. Now, we can start computing the transition matrix. 
-
+Yay! We've stored the nodes in `self._url_dict`, have the edges of our graph in `indices`, and the in-link number in 'target_counts`. Now, we can start computing the transition matrix
 ```
         # compute the values that correspond to the indices variable
         logging.debug('computing values')
