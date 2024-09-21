@@ -280,6 +280,9 @@ Pretty similar set-up for `x0`. The user may also pass in an `x0` if there is a 
 
 Now, we need to make the $\textbf{a}$ vector to make $P$ stochastic and all. We know that every row that we've entered numbers into is already stochastic - thus, we just need to check for rows of all 0s. 
 
+We want to map our equation 
+
+to `torch.addmm(input, mat1, mat2, *, beta=1, alpha=1, out=None)`.
 OMGG here we go! 
 ```
             # main loop
