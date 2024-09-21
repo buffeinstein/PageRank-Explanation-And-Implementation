@@ -231,6 +231,62 @@ YAYYYY we're all set up with our `P` matrix. Now let's start doing some math.
 
 ## The power method
 
+We're using the power method to find the eigenvector ie the PageRank vector of the transition matrix `P`. Go to the paper for an explanation of some of the modifications we make to the raw transition matrix to make it primitive and irreducible and all. The main equation: 
+
+$$ \textbf{x}^{(k)T} = \alpha \textbf{x}^{(k-1)T} +  [(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$$ 
+
+The output of this function $\textbf{x}^{(k)T}$ is the PageRank vector itself! 
+
+We're going to create a function with these inputs: 
+
+```
+ def power_method(self, v=None, x0=None, alpha=0.85, max_iterations=1000, epsilon=1e-6):
+```
+
+where 
+
+Let's talk about the `v` personalization vector later right now, and just assume that `v` is none. 
+        with torch.no_grad():
+            n = self.P.shape[0]
+
+            # create variables if none given
+            if v is None:
+                v = torch.Tensor([1/n]*n)
+                v = torch.unsqueeze(v,1)
+            v /= torch.norm(v)
+
+            if x0 is None:
+                x0 = torch.Tensor([1/(math.sqrt(n))]*n)
+                x0 = torch.unsqueeze(x0,1)
+            x0 /= torch.norm(x0)
+
+            # main loop
+            xprev = x0
+            x = xprev.detach().clone()
+            for i in range(max_iterations):
+                xprev = x.detach().clone()
+
+                # compute the new x vector using Eq (5.1)
+                # FIXME: Task 1
+                # HINT: this can be done with a single call to the `torch.sparse.addmm` function,
+                # but you'll have to read the code above to figure out what variables should get passed to that function
+                # and what pre/post processing needs to be done to them
+
+                # output debug information
+                residual = torch.norm(x-xprev)
+                logging.debug(f'i={i} residual={residual}')
+
+                # early stop when sufficient accuracy reached
+                if residual < epsilon:
+                    break
+
+            #x = x0.squeeze()
+            return x.squeeze()
+
+
+```
+
+
 **Part 1:** Let's first implement something that ranks all sites without a specific search. 
 
 IMPLEMENTATION CODE HERE AND DISCUSS IT 
