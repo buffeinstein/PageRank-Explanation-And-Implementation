@@ -178,25 +178,58 @@ Let's talk about this block of code later; assume that filter_ratio is None for 
             indices = new_indices
 ```
 
-Yay! We've stored the nodes in `self._url_dict`, have the edges of our graph in `indices`, and the in-link number in 'target_counts`. Now, we can start computing the transition matrix
+Yay! We've stored the nodes in `self._url_dict`, have the edges of our graph in `indices`, and the in-link number in `target_counts`. Now, we can start computing the transition matrix. Recall that we want to store this as a sparse matrix - specifically, the `torch.sparse.FloatTensor`. 
+
+Sparse matrices assume that most of the numbers in the matrix is 0, and so it only stores the location of the non-zeros and their corresponding values. We know from looking at our .csv that our 0th website will have two edges to the 1st and second. Thus, our matrix will have a 0.5 in the 0th row+1st column and in the 0th row+2nd column. That is specificaly the coordinate information stores as the first two values in `indices = [[0, 1], [0, 2], [2, 0]]` ! 
+
+However, sparse matrices take in the indices with all of the row-coordinates in one list, and the y-coordinates in the other. Thankfully, all that takes is a quick transpose! Storing that transpose in `i`, we get 
+
 ```
-        # compute the values that correspond to the indices variable
-        logging.debug('computing values')
-        values = []
-        last_source = indices[0][0]
-        last_i = 0
-        for i,(source,target) in enumerate(indices+[(None,None)]):
-            if source==last_source:
-                pass
-            else:
-                total_links = i-last_i
-                values.extend([1/total_links]*total_links)
-                last_source = source
-                last_i = i
+i = [[0, 0, 2],   # Sources
+     [1, 2, 0]]   # Targets
 ```
 
+Amazing. We will store this `i` in the `torch.LongTensor` for compability reasons, so our final code for creating indices:
+```
+        i = torch.LongTensor(indices).t()
+```
 
-## Task 1: the power method
+We have the indices for our sparse matrix, but we still need to store what values to put in at those spots. This code for me is a little bit of a doozy to explain with words and I think the best way to get an idea of how `values` is beign made is to copy this specific block below into `https://pythontutor.com/visualize.html#mode=edit`: 
+
+```
+indices = [[0, 1], [0, 2], [2, 0]]
+
+values = []
+last_source = indices[0][0]
+last_i = 0
+for i,(source,target) in enumerate(indices+[(None,None)]):
+    if source==last_source:
+        pass
+    else:
+        total_links = i-last_i
+        values.extend([1/total_links]*total_links)
+        last_source = source
+        last_i = i
+```
+
+SLAYYY now we've got both `indices` and `values`. lets put it all together: 
+
+```
+        # generate the sparse matrix
+        i = torch.LongTensor(indices).t()
+        v = torch.FloatTensor(values)
+        n = len(self.url_dict)
+        self.P = torch.sparse.FloatTensor(i, v, torch.Size([n,n]))
+```
+
+And finally, we're going to create this dictionary: 
+```
+        self.index_dict = {v: k for k, v in self.url_dict.items()}
+```
+
+YAYYYY we're all set up with our `P` matrix. Now let's start doing some math. 
+
+## The power method
 
 **Part 1:** Let's first implement something that ranks all sites without a specific search. 
 
