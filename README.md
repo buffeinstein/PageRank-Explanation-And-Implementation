@@ -6,11 +6,11 @@ This project is an exploration of the math concepts in the *Deeper Inside Pagera
 
 The relevant math for my code is in sections 3 and 5. If this is your first time with Markov Chains, I recommend the first three videos in this short and simple youtube series: https://www.youtube.com/playlist?list=PLM8wYQRetTxBkdvBtz-gw8b9lcVkdXQKV
 
-To summarize the work below: we're creating a web graph of sites as nodes and hyperlinks to create edges. Then, we create the corresponding adjacency matrix (ie P in the paper) and find its eigenvector (the stationary vector of a Markov chain). This stationary vector represents the distribution of the probability of visiting a site after an infinite random walk along the Markov chain. The sites with the highest probability of being visited are most likely to be useful to the user, and therefore, will be returned first! 
+To summarize the math below: we're creating a web graph of sites as nodes and hyperlinks to create edges. Then, we create the corresponding adjacency matrix (ie P in the paper) and find its eigenvector (the stationary vector of a Markov chain). This stationary vector represents the distribution of the probability of visiting a site after an infinite random walk along the Markov chain. The sites with the highest probability of being visited are most likely to be useful to the user, and therefore, will be returned first! 
 
-## Background
+## Some intuition about the data + overview of what our code will do
 
-**Some intuition about the data:**  
+**Our graph is sparse**
 
 The data file `lawfareblog.csv.gz` contains the lawfare blog's web graph! 
 Let's take a look at the first 10 of these lines:
@@ -72,7 +72,7 @@ $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --search_query=co
 If you were to comment out the "WebGraph.power_method" function, then the outputted webpages would be returned in an arbitrary order. The following code uses the *Deeper Inside Pagerank* equation 5.1 to calculate which sites are the most important (i.e. have the highest pagerank results) and are returned first.
 
 
-## Task 0: Code Set-Up, Line-By-Line explanation!
+## Task 0: Setting-Up `P`, Line-By-Line explanation!
 I'm going to go line-by-line through the code now. This is mostly for me because I forget how my code works after like 2 seconds. 
 
 First, we have to make it a little easier to make nodes out of websites. The URLS are superrrr long, lets just number them and reference them by their number! 
@@ -167,7 +167,7 @@ Ok, now we are finally building the `target_counts` and `indices`. This is using
                 indices.append([source,target])
 ```
 
-Let's talk about this block of code later; assume that filter_ratio is None for now. 
+Let's talk about this block of code later; assume that `filter_ratio is None` for now. 
 ```
      # remove urls with too many in-links
         if filter_ratio is not None:
@@ -343,10 +343,14 @@ INFO:root:rank=7 pagerank=2.8741e-01 url=www.lawfareblog.com/our-comments-policy
 INFO:root:rank=8 pagerank=2.8741e-01 url=www.lawfareblog.com/upcoming-events
 INFO:root:rank=9 pagerank=2.8741e-01 url=www.lawfareblog.com/topics
 ```
+It works! 
 
-Hmmm... a lot of these pages are kind of boring. Lawfare's history, their job board, their subscribe page - all non-article pages. 
-We see that our algorithm highly ranks pages with many in-links - without a specific user query, some of the highest-ranked sites are boring non-article pages such the root page <https://lawfareblog.com/>, or a table of contents <https://www.lawfareblog.com/topics>, or a subscribe page <https://www.lawfareblog.com/subscribe-lawfare>.
-These pages therefore have a large pagerank, but usually when we are performing a web search, we only want articles.
+## Improving the search 
+**Filtering out non-articles**
+
+Some of the highest-ranked sites are boring non-article pages such the root page <https://lawfareblog.com/>, or a table of contents <https://www.lawfareblog.com/topics>, or a subscribe page <https://www.lawfareblog.com/subscribe-lawfare>.
+
+We see that our algorithm highly ranks pages with many in-links - pages likethe subscribe page will likely be hyperlinked at the bottom of each article!These pages therefore have a large pagerank, but usually when we are performing a web search, we only want articles.
 
 This raises the question: How can we find the most important articles filtering out the non-article pages? The answer is to modify the `P` matrix by removing all links to non-article pages.One easy-to-implement method is to filter nodes by using their "in-link ratio" - the total number of edges with the node as a target (ie this site itself is hyperlinked in other sites) divided by the total number of nodes. Non-article pages often appear in the menu of a webpage, and therefore have links from almost all of the other webpages - thus, their in-link ratio is very high. 
 
@@ -394,18 +398,14 @@ and our "anti-spam" `--filter-ratio` argument removed this article from the list
 In general, it is a challenging open problem to remove spam from pagerank results,
 and all current solutions rely on careful human tuning and still have lots of false positives and false negatives.
 
-> **NOTE:**
-> The `--verbose` flag causes all of the lines beginning with `DEBUG` to be printed.
-> By default, only lines beginning with `INFO` are printed.
 
-**Part 2:**
+**Searching with key words**
+
 Now let's see how this works when a user has a specific query. 
 
 The `pagerank.py` file has an option `--search_query`, which takes a string as a parameter.
 If this argument is used, then the program returns all nodes that match the query string sorted according to their pagerank.
 Essentially, this gives us the most important pages related to our query.
-
-Using the lawfare blog, I get these results:
 
 ```
 $ python3 pagerank.py --data=data/lawfareblog.csv.gz --search_query='corona'
@@ -447,7 +447,7 @@ INFO:root:rank=9 pagerank=1.1463e-03 url=www.lawfareblog.com/israel-iran-syria-c
 
 
 
-**Part 4:**
+**Exploring different alpha values**
 
 Recall from the reading that the runtime of pagerank depends heavily on the eigengap of the `\bar\bar P` matrix,
 and that this eigengap is bounded by the alpha parameter.
@@ -584,82 +584,6 @@ but this algorithm also finds articles about Chinese propaganda and Trump's poli
 Both of these articles are highly relevant to coronavirus discussions,
 but a simple keyword search for corona or related terms would not find these articles.
 
-<!--
-**Part 3:**
+## Conclusions
 
-Select another topic related to national security.
-You should experiment with a national security topic other than the coronavirus.
-For example, find out what articles are important to the `iran` topic but do not contain the word `iran`.
-Your goal should be to discover what topics that www.lawfareblog.com considers to be related to the national security topic you choose.
--->
-
-## Submission
-
-1. Create a new repo on github (not a fork of this repo).
-
-1. Run the following commands, and paste their output into the code blocks below.
-   
-   Task 1, part 1:
-   ```
-   $ python3 pagerank.py --data=data/small.csv.gz --verbose
-   ```
-
-   Task 1, part 2:
-   ```
-   $ python3 pagerank.py --data=data/lawfareblog.csv.gz --search_query='corona'
-
-   $ python3 pagerank.py --data=data/lawfareblog.csv.gz --search_query='trump'
-
-   $ python3 pagerank.py --data=data/lawfareblog.csv.gz --search_query='iran'
-   ```
-
-   Task 1, part 3:
-   ```
-   $ python3 pagerank.py --data=data/lawfareblog.csv.gz
-
-   $ python3 pagerank.py --data=data/lawfareblog.csv.gz --filter_ratio=0.2
-   ```
-
-   Task 1, part 4:
-   ```
-   $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose 
-   $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --alpha=0.99999
-   $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --filter_ratio=0.2
-   $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --filter_ratio=0.2 --alpha=0.99999
-   ```
-
-   Task 2, part 1:
-   ```
-   $ python3 pagerank.py --data=data/lawfareblog.csv.gz --filter_ratio=0.2 --personalization_vector_query='corona'
-   ```
-
-   Task 2, part 2:
-   ```
-   $ python3 pagerank.py --data=data/lawfareblog.csv.gz --filter_ratio=0.2 --personalization_vector_query='corona' --search_query='-corona'
-   ```
-
-1. Ensure that all your changes to the `pagerank.py` and `README.md` files are committed to your repo and pushed to github.
-
-1. Get at least 5 stars on your repo.
-   (You may trade stars with other students in the class.)
-
-   > **NOTE:**
-   > 
-   > Recruiters use github profiles to determine who to hire,
-   > and pagerank is used to rank user profiles and projects.
-   > Links in this graph correspond to who has starred/followed who's repo.
-   > By getting more stars on your repo, you'll be increasing your github pagerank, which increases the likelihood that recruiters will hire you.
-   > To see an example, [perform a search for `data mining`](https://github.com/search?q=data+mining).
-   > Notice that the results are returned "approximately" ranked by the number of stars,
-   > but because "some stars count more than others" the results are not exactly ranked by the number of stars.
-   > (I asked you not to fork this repo because forks are ranked lower than non-forks.)
-   >
-   > In some sense, we are doing a "dual problem" to data mining by getting these stars.
-   > Recruiters are using data mining to find out who the best people to recruit are,
-   > and we are hacking their data mining algorithms by making those algorithms select you instead of someone else.
-   >
-   > If you're interested in exploring this idea further, here's a python tutorial for extracting GitHub's social graph: <https://www.oreilly.com/library/view/mining-the-social/9781449368180/ch07.html> ; if you're interested in learning more about how recruiters use github profiles, read this Hacker News post: <https://news.ycombinator.com/item?id=19413348>.
-
-1. Submit the url of your repo to sakai.
-
-   Each part is worth 2 points, for 12 points overall.
+What a journey. Hope y'all enjoyed!
