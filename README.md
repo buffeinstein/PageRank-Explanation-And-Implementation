@@ -760,6 +760,7 @@ INFO:root:rank=7 pagerank=2.8859e-01 url=www.lawfareblog.com/our-comments-policy
 INFO:root:rank=8 pagerank=2.8859e-01 url=www.lawfareblog.com/upcoming-events
 INFO:root:rank=9 pagerank=2.8859e-01 url=www.lawfareblog.com/litigation-documents-related-appointment-matthew-whitaker-acting-attorney-general
 ```
+```
 atiwari@Ambikas-Laptop PageRank-Explanation-And-Implementation % python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --filter_ratio=0.2
 DEBUG:root:computing indices
 DEBUG:root:computing values
