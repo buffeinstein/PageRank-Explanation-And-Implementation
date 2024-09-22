@@ -78,15 +78,7 @@ Let's create some variables, ` self.url_dict`, `indices`, `target_counts`.
 ```
 class WebGraph():
 
-    def __init__(self, filename, max_nnz=None, filter_ratio=None):
-        '''
-        Initializes the WebGraph from a file.
-        The file should be a gzipped csv file.
-        Each line contains two entries: the source and target corresponding to a single web link.
-        This code assumes that the file is sorted on the source column.
-        '''
-
-        #actual code 
+    def __init__(self, filename, max_nnz=None, filter_ratio=None): 
         self.url_dict = {}
         indices = []
         from collections import defaultdict
@@ -154,7 +146,7 @@ This code filters out links with lots of slashes, which usually is directories.
                     continue
 ```
 
-Ok, now we are finally building the `target_counts` and `indices`. This is using the WebGraph method `._url_to_index` from below, which is self-explanatory. Recall that our for loop is working on one row at a time. The line `source = self._url_to_index(row['source'])` is just using CSV's indexing format to create/set the variable `source` and `target`  to the left and right columns of the row our `for` loop is working on. With that set, we can update our `target_counts` and `indices`.
+Ok, now we are finally building the `target_counts` and `indices`. This is using the WebGraph method `._url_to_index` from below, which is self-explanatory. Recall that our `for` loop is working on one row at a time. The line `source = self._url_to_index(row['source'])` is just using CSV's indexing format to create/set the variables `source` to the left column of the row our `for` loop is working on. With `source` and `target` set, we can update our `target_counts` and `indices`.
 ```
                 source = self._url_to_index(row['source'])
                 target = self._url_to_index(row['target'])
@@ -223,11 +215,11 @@ We're all set up with our `P` matrix! Now let's start doing some math.
 
 ## The power method
 
-We're using the power method to find the eigenvector ie the PageRank vector of the transition matrix `P`. Go to the paper for an explanation of some of the modifications we make to the raw transition matrix to make it primitive and irreducible and all. The main equation: 
+We're using the power method in equation 5.1 to find the eigenvector, ie the PageRank vector, of the transition matrix `P`. Many of you might be wondering why we're not just directly using SciPy's built-in functions for finding eigenvectors - go to the Runtimes section below! Eq 5.1: 
 
 $$ \textbf{x}^{(k)T} = (\alpha \textbf{x}^{(k-1)T})P +  [(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$$ 
 
-The output of this function $\textbf{x}^{(k)T}$ is the PageRank vector itself! 
+We iteratively run this equation 
 
 We're going to create a function with these inputs: 
 
@@ -336,9 +328,9 @@ It works!
 ## Improving the search 
 **Filtering out non-articles:**
 
-Some of the highest-ranked sites are boring non-article pages such the root page <https://lawfareblog.com/>, or a table of contents <https://www.lawfareblog.com/topics>, or a subscribe page <https://www.lawfareblog.com/subscribe-lawfare>.
+Some of the highest-ranked sites are boring non-article pages such the root page <https://lawfareblog.com/>, table of contents <https://www.lawfareblog.com/topics>, or a subscribe page <https://www.lawfareblog.com/subscribe-lawfare>.
 
-We see that our algorithm highly ranks pages with many in-links - pages likethe subscribe page will likely be hyperlinked at the bottom of each article!These pages therefore have a large pagerank, but usually when we are performing a web search, we only want articles.
+We see that our algorithm highly ranks pages with many in-links - pages like the subscribe page will likely be hyperlinked at the bottom of each article! These pages therefore have a large pagerank, but usually when we are performing a web search, we only want articles.
 
 This raises the question: How can we find the most important articles filtering out the non-article pages? The answer is to modify the `P` matrix by removing all links to non-article pages.One easy-to-implement method is to filter nodes by using their "in-link ratio" - the total number of edges with the node as a target (ie this site itself is hyperlinked in other sites) divided by the total number of nodes. Non-article pages often appear in the menu of a webpage, and therefore have links from almost all of the other webpages - thus, their in-link ratio is very high. 
 
@@ -390,10 +382,14 @@ and all current solutions rely on careful human tuning and still have lots of fa
 
 Now let's see how this works when a user has a specific query. 
 
-The `pagerank.py` file has an option `--search_query`, which takes a string as a parameter.
-If this argument is used, then the program returns all nodes that match the query string sorted according to their pagerank.
-Essentially, this gives us the most important pages related to our query.
+The `pagerank.py` file has an option `--search_query`, which takes a string as a parameter. This filter is applied after the pagerank vector is already returned. If used, then the program returns all nodes that match the query string sorted according to their pagerank.
 
+You can run this with 
+
+```
+python3 pagerank.py --data=data/lawfareblog.csv.gz --search_query='corona'
+```
+to get: 
 ```
 $ python3 pagerank.py --data=data/lawfareblog.csv.gz --search_query='corona'
 INFO:root:rank=0 pagerank=1.0038e-03 url=www.lawfareblog.com/lawfare-podcast-united-nations-and-coronavirus-crisis
@@ -444,14 +440,10 @@ $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --alpha=0.99999
 $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --filter_ratio=0.2
 $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --filter_ratio=0.2 --alpha=0.99999
 ```
-You should notice that the last command takes considerably more iterations to compute the pagerank vector.
-(My code takes 685 iterations for this call, and about 10 iterations for all the others.)
+You should notice that the last command takes considerably more iterations to compute the pagerank vector. (My code takes 685 iterations for this call, and about 10 iterations for all the others - I'll talk more about this in the Runtime section!)
 
-This raises the question: Why does the second command (with the `--alpha` option but without the `--filter_ratio`) option not take a long time to run?
-The answer is that the `P` graph for <https://www.lawfareblog.com> naturally has a large eigengap and so is fast to compute for all alpha values,
-but the modified graph does not have a large eigengap and so requires a small alpha for fast convergence.
+Changing the value of alpha gives us very different pagerank rankings.
 
-Changing the value of alpha also gives us very different pagerank rankings.
 For example, 
 ```
 $ python3 pagerank.py --data=data/lawfareblog.csv.gz --filter_ratio=0.2
@@ -479,27 +471,22 @@ INFO:root:rank=8 pagerank=1.6020e-02 url=www.lawfareblog.com/water-wars-song-oil
 INFO:root:rank=9 pagerank=1.6020e-02 url=www.lawfareblog.com/water-wars-sinking-feeling-philippine-china-relations
 ```
 
-Which of these rankings is better is entirely subjective,
-and the only way to know if you have the "best" alpha for your application is to try several variations and see what is best.
-If large alphas are good for your application, you can see that there is a trade-off between quality answers and algorithmic runtime.
-I'll be exploring this trade-off more formally in my next CS143 projects!
+Which of these rankings is better is entirely subjective,and the only way to know if you have the "best" alpha for your application is to try several variations.
+
+If large alphas are good for your application, you can see that there is a trade-off between quality answers and algorithmic runtime QQ. 
 
 ## The personalization vector! 
 
-There is another change that we can make to adjust your search, at the equation level - a deeper change than just changing the alpha's value or filtering the results after the math with a word-match search. Let's talk about our equation a bit more before we get into it: 
+There is another adjustment we can make to our searches, at the equation level - a deeper change than just changing the alpha's value or filtering the results after the math with a word-match search. 
 
-$$ \textbf{x}^{(k)T} = (\alpha \textbf{x}^{(k-1)T})P +  [(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$$ 
+**Thinking about the math again**
+
 
 Let's not think too much about the math of eigenvectors, and instead try to zoom out think of this as websites and users, and how modeling people's activity with Markov Chains works. 
 
-The PageRank vector is trying to estimate what the best websites are to return to a user - it estimates that by calculating sites that have the highest probability of being visited - its assuming a correlation between the probability of a user visiting the sites with the amount of times a site is hyperlinked in other sites - that again is assuming that users click on hyperlinks all the time with equal prefererence to any hyperlink within a site. 
+The PageRank vector is trying to estimate what the best websites are to return to a user - it estimates that by calculating sites that have the highest probability of being visited - its assuming a correlation between the probability of a user visiting the sites with the amount of times a site is hyperlinked in other sites - that again is assuming that users click on hyperlinks all the time with equal prefererence to any hyperlink within a site.
 
-Basically, we're trying to model user preferences and activity, and we're simplifying and assuming a lot of things about hyperlinks and how users surf the web. This story directly show up in our equation! 
-
-$\textbf{x}^{(k)T} =$
-
-$(\alpha \textbf{x}^{(k-1)T})P$ +  
-$[(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$
+How does these assumptions and this story about user activity show up in your equation? Let's use an **equivalent version of equation 5.1** that's written in a different way to highlight that story: 
 
 
 The most interesting applications of pagerank involve the personalization vector.
@@ -512,8 +499,7 @@ for each index in the personalization vector:
     if so, set the corresponding index to one
 normalize the vector
 ```
-
-**Part 1:**
+**Comparing personalization vector to search query**
 
 The command line argument `--personalization_vector_query` will use the function you created above to augment your search with a custom personalization vector.
 If you've implemented the function correctly,
@@ -547,23 +533,12 @@ INFO:root:rank=8 pagerank=3.2160e-03 url=www.lawfareblog.com/congress-needs-coro
 INFO:root:rank=9 pagerank=3.1036e-03 url=www.lawfareblog.com/why-congress-conducting-business-usual-face-coronavirus
 ```
 
-Which results are better?
-Again, that depends on what you mean by "better."
-With the `--personalization_vector_query` option,
-a webpage is important only if other coronavirus webpages also think it's important;
-with the `--search_query` option,
-a webpage is important if any other webpage thinks it's important.
-You'll notice that in the later example, many of the webpages are about Congressional proceedings related to the coronavirus.
-From a strictly coronavirus perspective, these are not very important webpages.
-But in the broader context of national security, these are very important webpages.
+Which results are better? Again, that depends on what you mean by "better." With the `--personalization_vector_query` option, a webpage is important only if other coronavirus webpages also think it's important. With the `--search_query` option, a webpage is important if any other webpage thinks it's important. You'll notice that in the later example, many of the webpages are about Congressional proceedings related to the coronavirus. From a strictly coronavirus perspective, these are not very important webpages. But in the broader context of national security, these are very important webpages.
 
-Google engineers spend TONs of time fine-tuning their pagerank personalization vectors to remove spam webpages.
-Exactly how they do this is another one of their secrets that they don't publicly talk about.
-
-**Part 2:**
+**Mapping related topics**
 
 Another use of the `--personalization_vector_query` option is that we can find out what webpages are related to the coronavirus but don't directly mention the coronavirus.
-This can be used to map out what types of topics are similar to the coronavirus.
+This can be used to map out what types of topics are similar to the coronavirus. 
 
 For example, the following query ranks all webpages by their `corona` importance,
 but removes webpages mentioning `corona` from the results.
@@ -585,7 +560,7 @@ but this algorithm also finds articles about Chinese propaganda and Trump's poli
 Both of these articles are highly relevant to coronavirus discussions,
 but a simple keyword search for corona or related terms would not find these articles.
 
-## Conclusions
+## Runtime analysis
 
 
 What a journey. Hope y'all enjoyed!
