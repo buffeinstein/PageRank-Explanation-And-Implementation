@@ -8,9 +8,7 @@ The relevant math for my code is in sections 3 and 5. If this is your first time
 
 To summarize the math below: we're creating a web graph of sites as nodes and hyperlinks to create edges. Then, we create the corresponding adjacency matrix (ie P in the paper) and find its eigenvector (the stationary vector of a Markov chain). This stationary vector represents the distribution of the probability of visiting a site after an infinite random walk along the Markov chain. The sites with the highest probability of being visited are most likely to be useful to the user, and therefore, will be returned first! 
 
-## Some intuition about the data + overview of what our code will do
-
-**Our graph is sparse**
+## Some intuition about the data and the webgraph 
 
 The data file `lawfareblog.csv.gz` contains the lawfare blog's web graph! 
 Let's take a look at the first 10 of these lines:
@@ -68,8 +66,6 @@ $ python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --search_query=co
 > **NOTE:**
 > It will take about 10 seconds to load and parse the data files.
 > All the other computation happens essentially instantly.
-
-If you were to comment out the "WebGraph.power_method" function, then the outputted webpages would be returned in an arbitrary order. The following code uses the *Deeper Inside Pagerank* equation 5.1 to calculate which sites are the most important (i.e. have the highest pagerank results) and are returned first.
 
 
 ## Task 0: Setting-Up `P`, Line-By-Line explanation!
@@ -135,7 +131,6 @@ Now that we know what those are supposed to look like, let's start using our law
 We open up the file and will now go through each row individually in our `for` loop, and use `i` as our counter of what row we are on in case we want to pass in a `max_nnz` that limits how many rows go up to. 
 
 ```
-#actual code
         # loop through filename to extract the indices
         logging.debug('computing indices')
 
@@ -198,6 +193,7 @@ We will store this `i` in the `torch.LongTensor` for compability reasons, so our
 We have the indices for our sparse matrix, but we still need to store what values to put in at those spots. This code for me is a little bit of a doozy to explain with words and I think the best way to get an idea of how `values` is beign made is to copy this specific block below into `https://pythontutor.com/visualize.html#mode=edit`: 
 
 ```
+#example code to visualize making `values`
 indices = [[0, 1], [0, 2], [2, 0]]
 
 values = []
@@ -213,7 +209,7 @@ for i,(source,target) in enumerate(indices+[(None,None)]):
         last_i = i
 ```
 
-SLAYYY now we've got both `indices` and `values`. lets put it all together: 
+SLAYYY now we've got both `indices` and `values`. Let's put it all together: 
 
 ```
         # generate the sparse matrix
@@ -250,7 +246,6 @@ Let's just grab the dimension of the square matrix `P` real quick and store it i
             n = self.P.shape[0]
 ```
 
- 
 Let's pass in the `v` personalization later - for now, all of the $n$ entries of this vector are going to be $\frac{1}{n}$. We're going to use matrix multiplication instead of matrix/vector multiplication, so we're going to use `torch.unsqueeze`  to add the dimension needed for matrix multiplication. 
 
 ```
@@ -346,7 +341,7 @@ INFO:root:rank=9 pagerank=2.8741e-01 url=www.lawfareblog.com/topics
 It works! 
 
 ## Improving the search 
-**Filtering out non-articles**
+**Filtering out non-articles:**
 
 Some of the highest-ranked sites are boring non-article pages such the root page <https://lawfareblog.com/>, or a table of contents <https://www.lawfareblog.com/topics>, or a subscribe page <https://www.lawfareblog.com/subscribe-lawfare>.
 
@@ -399,7 +394,7 @@ In general, it is a challenging open problem to remove spam from pagerank result
 and all current solutions rely on careful human tuning and still have lots of false positives and false negatives.
 
 
-**Searching with key words**
+**Searching with key words:**
 
 Now let's see how this works when a user has a specific query. 
 
@@ -444,8 +439,6 @@ INFO:root:rank=7 pagerank=1.4221e-03 url=www.lawfareblog.com/us-names-iranian-re
 INFO:root:rank=8 pagerank=1.1788e-03 url=www.lawfareblog.com/iran-shoots-down-us-drone-domestic-and-international-legal-implications
 INFO:root:rank=9 pagerank=1.1463e-03 url=www.lawfareblog.com/israel-iran-syria-clash-and-law-use-force
 ```
-
-
 
 **Exploring different alpha values**
 
