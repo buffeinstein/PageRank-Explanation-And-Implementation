@@ -278,7 +278,13 @@ The user may also pass in an `x0` if there is a specific starting point, but oth
 
 Now, we need to make the $\textbf{a}$ vector to make $P$ stochastic and all. We know that every row that we've entered numbers into is already stochastic - thus, we just need to check for rows of all 0s. 
 
-We want to map our equation 
+```
+            stochastic_rows = torch.sparse.sum(self.P,1).indices()
+            a = torch.ones([n,1])
+            a[stochastic_rows]= 0
+```
+
+We have all the variables we need in our code. Now we put it together! We want to map our equation 
 
 $$ \textbf{x}^{(k)T} = (\alpha \textbf{x}^{(k-1)T})P +  [(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$$ 
 
@@ -314,52 +320,58 @@ OMGG here we go!
 
 ```
 
-
-**Part 1:** Let's first implement something that ranks all sites without a specific search. 
-
-IMPLEMENTATION CODE HERE AND DISCUSS IT 
-
 Let's test it!! 
 
 The command to run is 
 ```
-python3 pagerank.py --data=data/small.csv.gz --verbose
+python3 pagerank.py --data=data/lawfareblog.csv.gz
 ```
 
 And this is the output! 
 
 ```
-$ python3 pagerank.py --data=data/lawfareblog.csv.gz
-INFO:root:rank=0 pagerank=2.8741e-01 url=www.lawfareblog.com/lawfare-job-board
-INFO:root:rank=1 pagerank=2.8741e-01 url=www.lawfareblog.com/masthead
-INFO:root:rank=2 pagerank=2.8741e-01 url=www.lawfareblog.com/litigation-documents-related-appointment-matthew-whitaker-acting-attorney-general
-INFO:root:rank=3 pagerank=2.8741e-01 url=www.lawfareblog.com/documents-related-mueller-investigation
-INFO:root:rank=4 pagerank=2.8741e-01 url=www.lawfareblog.com/topics
-INFO:root:rank=5 pagerank=2.8741e-01 url=www.lawfareblog.com/about-lawfare-brief-history-term-and-site
-INFO:root:rank=6 pagerank=2.8741e-01 url=www.lawfareblog.com/snowden-revelations
-INFO:root:rank=7 pagerank=2.8741e-01 url=www.lawfareblog.com/support-lawfare
+% python3 pagerank.py --data=data/lawfareblog.csv.gz
+INFO:root:rank=0 pagerank=2.8741e-01 url=www.lawfareblog.com/about-lawfare-brief-history-term-and-site
+INFO:root:rank=1 pagerank=2.8741e-01 url=www.lawfareblog.com/lawfare-job-board
+INFO:root:rank=2 pagerank=2.8741e-01 url=www.lawfareblog.com/masthead
+INFO:root:rank=3 pagerank=2.8741e-01 url=www.lawfareblog.com/litigation-documents-resources-related-travel-ban
+INFO:root:rank=4 pagerank=2.8741e-01 url=www.lawfareblog.com/subscribe-lawfare
+INFO:root:rank=5 pagerank=2.8741e-01 url=www.lawfareblog.com/litigation-documents-related-appointment-matthew-whitaker-acting-attorney-general
+INFO:root:rank=6 pagerank=2.8741e-01 url=www.lawfareblog.com/documents-related-mueller-investigation
+INFO:root:rank=7 pagerank=2.8741e-01 url=www.lawfareblog.com/our-comments-policy
 INFO:root:rank=8 pagerank=2.8741e-01 url=www.lawfareblog.com/upcoming-events
-INFO:root:rank=9 pagerank=2.8741e-01 url=www.lawfareblog.com/our-comments-policy
+INFO:root:rank=9 pagerank=2.8741e-01 url=www.lawfareblog.com/topics
 ```
 
+Hmmm... a lot of these pages are kind of boring. Lawfare's history, their job board, their subscribe page - all non-article pages. 
 We see that our algorithm highly ranks pages with many in-links - without a specific user query, some of the highest-ranked sites are boring non-article pages such the root page <https://lawfareblog.com/>, or a table of contents <https://www.lawfareblog.com/topics>, or a subscribe page <https://www.lawfareblog.com/subscribe-lawfare>.
 These pages therefore have a large pagerank, but usually when we are performing a web search, we only want articles.
 
 This raises the question: How can we find the most important articles filtering out the non-article pages? The answer is to modify the `P` matrix by removing all links to non-article pages.One easy-to-implement method is to filter nodes by using their "in-link ratio" - the total number of edges with the node as a target (ie this site itself is hyperlinked in other sites) divided by the total number of nodes. Non-article pages often appear in the menu of a webpage, and therefore have links from almost all of the other webpages - thus, their in-link ratio is very high. 
 
-The `--filter_ratio` parameter causes the code to remove all pages that have an in-link ratio larger than a value that we choose. 
+The `--filter_ratio` parameter causes the code to remove all pages that have an in-link ratio larger than a value that we choose! Let's see the code that does this - we glossed over it the first time we read it. 
+
+```
+     # remove urls with too many in-links
+        if filter_ratio is not None:
+            new_indices = []
+            for source,target in indices:
+                if target_counts[target] < filter_ratio*len(self.url_dict):
+                    new_indices.append([source,target])
+            indices = new_indices
+```
 
 Let's use the filter ratio parameter, with a chosen ratio cap of 0.2:
 ```
-$ python3 pagerank.py --data=data/lawfareblog.csv.gz --filter_ratio=0.2
-INFO:root:rank=0 pagerank=3.4696e-01 url=www.lawfareblog.com/trump-asks-supreme-court-stay-congressional-subpeona-tax-returns
-INFO:root:rank=1 pagerank=2.9521e-01 url=www.lawfareblog.com/livestream-nov-21-impeachment-hearings-0
+% python3 pagerank.py --data=data/lawfareblog.csv.gz --filter_ratio=0.2
+INFO:root:rank=0 pagerank=3.4697e-01 url=www.lawfareblog.com/trump-asks-supreme-court-stay-congressional-subpeona-tax-returns
+INFO:root:rank=1 pagerank=2.9522e-01 url=www.lawfareblog.com/livestream-nov-21-impeachment-hearings-0
 INFO:root:rank=2 pagerank=2.9040e-01 url=www.lawfareblog.com/opening-statement-david-holmes
 INFO:root:rank=3 pagerank=1.5179e-01 url=www.lawfareblog.com/lawfare-podcast-ben-nimmo-whack-mole-game-disinformation
-INFO:root:rank=4 pagerank=1.5099e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1963
-INFO:root:rank=5 pagerank=1.5099e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1964
-INFO:root:rank=6 pagerank=1.5071e-01 url=www.lawfareblog.com/lawfare-podcast-week-was-impeachment
-INFO:root:rank=7 pagerank=1.4957e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1962
+INFO:root:rank=4 pagerank=1.5100e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1964
+INFO:root:rank=5 pagerank=1.5100e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1963
+INFO:root:rank=6 pagerank=1.5072e-01 url=www.lawfareblog.com/lawfare-podcast-week-was-impeachment
+INFO:root:rank=7 pagerank=1.4958e-01 url=www.lawfareblog.com/todays-headlines-and-commentary-1962
 INFO:root:rank=8 pagerank=1.4367e-01 url=www.lawfareblog.com/cyberlaw-podcast-mistrusting-google
 INFO:root:rank=9 pagerank=1.4240e-01 url=www.lawfareblog.com/lawfare-podcast-bonus-edition-gordon-sondland-vs-committee-no-bull
 ```
