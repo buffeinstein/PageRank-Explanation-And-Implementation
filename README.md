@@ -494,6 +494,27 @@ I'll be exploring this trade-off more formally in my next CS143 projects!
 
 ## The personalization vector! 
 
+There is another change that we can make to adjust your search, at the equation level - a deeper change than just changing the alpha's value or filtering the results after the math with a word-match search. Let's talk about our equation a bit more before we get into it: 
+
+$$ \textbf{x}^{(k)T} = (\alpha \textbf{x}^{(k-1)T})P +  [(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$$ 
+
+Let's not think too much about the math of eigenvectors, and instead try to zoom out think of this as websites and users, and how modeling people's activity with Markov Chains works. 
+
+The PageRank vector is trying to estimate what the best websites are to return to a user - it estimates that by calculating sites that have the highest probability of being visited - its assuming a correlation between the probability of a user visiting the sites with the amount of times a site is hyperlinked in other sites - that again is assuming that users click on hyperlinks all the time with equal prefererence to any hyperlink within a site. 
+
+Basically, we're trying to model user preferences and activity, and we're simplifying and assuming a lot of things about hyperlinks and how users surf the web. This story directly show up in our equation! 
+
+$\textbf{x}^{(k)T} =$
+
+$(\alpha \textbf{x}^{(k-1)T})P$ +  
+$[(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$
+
+
+
+'re about to change things up a bit more at the math level now
+
+
+
 The most interesting applications of pagerank involve the personalization vector.
 Implement the `WebGraph.make_personalization_vector` function so that it outputs a personalization vector tuned for the input query.
 The pseudocode for the function is:
