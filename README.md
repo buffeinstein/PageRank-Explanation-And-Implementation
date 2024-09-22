@@ -234,7 +234,7 @@ YAYYYY we're all set up with our `P` matrix. Now let's start doing some math.
 
 We're using the power method to find the eigenvector ie the PageRank vector of the transition matrix `P`. Go to the paper for an explanation of some of the modifications we make to the raw transition matrix to make it primitive and irreducible and all. The main equation: 
 
-$$ \textbf{x}^{(k)T} = \alpha \textbf{x}^{(k-1)T} +  [(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$$ 
+$$ \textbf{x}^{(k)T} = (\alpha \textbf{x}^{(k-1)T})P +  [(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$$ 
 
 The output of this function $\textbf{x}^{(k)T}$ is the PageRank vector itself! 
 
@@ -244,14 +244,11 @@ We're going to create a function with these inputs:
  def power_method(self, v=None, x0=None, alpha=0.85, max_iterations=1000, epsilon=1e-6):
 ```
 
-where 
-
 Let's just grab the dimension of the square matrix `P` real quick and store it in `n`: 
 ```            
         with torch.no_grad():
             n = self.P.shape[0]
 ```
-
 
  
 Let's pass in the `v` personalization later - for now, all of the $n$ entries of this vector are going to be $\frac{1}{n}$. We're going to use matrix multiplication instead of matrix/vector multiplication, so we're going to use `torch.unsqueeze`  to add the dimension needed for matrix multiplication. 
@@ -271,7 +268,7 @@ Let's pass in the `v` personalization later - for now, all of the $n$ entries of
             v /= torch.norm(v)
 ```
 
-Pretty similar set-up for `x0`. The user may also pass in an `x0` if there is a specific starting point, but otherwise, it will be assumed that there is an equal probabibility of starting on any site. 
+The user may also pass in an `x0` if there is a specific starting point, but otherwise, it will be assumed that there is an equal probabibility of starting on any site. 
 ```
             if x0 is None:
                 x0 = torch.Tensor([1/(math.sqrt(n))]*n)
@@ -283,7 +280,12 @@ Now, we need to make the $\textbf{a}$ vector to make $P$ stochastic and all. We 
 
 We want to map our equation 
 
-to `torch.addmm(input, mat1, mat2, *, beta=1, alpha=1, out=None)`.
+$$ \textbf{x}^{(k)T} = (\alpha \textbf{x}^{(k-1)T})P +  [(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$$ 
+
+to `torch.addmm(input, mat1, mat2, *, beta=1, alpha=1, out=None)` which does: 
+
+out = (beta * input) + (alpha * mat1 * mat2)
+
 OMGG here we go! 
 ```
             # main loop
