@@ -177,12 +177,12 @@ Yay! We've stored the nodes in `self._url_dict`, have the edges of our graph in 
 
 Sparse matrices assume that most of the numbers in the matrix is 0, and so it only stores the location of the non-zeros and their corresponding values. We know from looking at our .csv that our 0th website will have two edges to the 1st and second. Thus, our matrix will have a 0.5 in the 0th row+1st column and in the 0th row+2nd column. That is specificaly the coordinate information stores as the first two values in `indices = [[0, 1], [0, 2], [2, 0]]` ! 
 
-However, sparse matrices take in the indices with all of the row-coordinates in one list, and the y-coordinates in the other. Thankfully, all that takes is a quick transpose! Storing that transpose in `i`, we get 
+However, sparse matrices take in the indices with all of the row-coordinates in the 0th list, and the column-coordinates in the first. Thankfully, all that takes is a quick transpose! Storing that transpose in `i`, we get 
 
 ```
 #an example
-i = [[0, 0, 2],   # Sources
-     [1, 2, 0]]   # Targets
+i = [[0, 0, 2],   # Sources/rows
+     [1, 2, 0]]   # Targets/columns
 ```
 
 We will store this `i` in the `torch.LongTensor` for compability reasons, so our final code for creating indices:
@@ -190,7 +190,7 @@ We will store this `i` in the `torch.LongTensor` for compability reasons, so our
         i = torch.LongTensor(indices).t()
 ```
 
-We have the indices for our sparse matrix, but we still need to store what values to put in at those spots. This code for me is a little bit of a doozy to explain with words and I think the best way to get an idea of how `values` is beign made is to copy this specific block below into `https://pythontutor.com/visualize.html#mode=edit`: 
+We have the indices for our sparse matrix, but we still need to store what values to put in at those spots. This code is difficult to explain with words - I think the best way to get an idea of how `values` is being constructed is to copy this specific block below into `https://pythontutor.com/visualize.html#mode=edit`: 
 
 ```
 #example code to visualize making `values`
@@ -219,12 +219,7 @@ SLAYYY now we've got both `indices` and `values`. Let's put it all together:
         self.P = torch.sparse.FloatTensor(i, v, torch.Size([n,n]))
 ```
 
-And finally, we're going to create this dictionary: 
-```
-        self.index_dict = {v: k for k, v in self.url_dict.items()}
-```
-
-YAYYYY we're all set up with our `P` matrix. Now let's start doing some math. 
+We're all set up with our `P` matrix! Now let's start doing some math. 
 
 ## The power method
 
@@ -258,12 +253,12 @@ Let's pass in the `v` personalization later - for now, all of the $n$ entries of
                 #            [0.3333],
                 #            [0.3333]])
 
-            # this line is redudant if we are creating v as above, as it will already be normalized.
+            # this line is redudant for now - if we are creating v as above, as it will already be normalized.
             # this line specifically is to make sure that the user-passed personalization vector will work with the rest of the code 
             v /= torch.norm(v)
 ```
 
-The user may also pass in an `x0` if there is a specific starting point, but otherwise, it will be assumed that there is an equal probabibility of starting on any site. 
+The user may also pass in an `x0`, but otherwise, it will be assumed that there is an equal probabibility of starting on any site. 
 ```
             if x0 is None:
                 x0 = torch.Tensor([1/(math.sqrt(n))]*n)
@@ -271,7 +266,7 @@ The user may also pass in an `x0` if there is a specific starting point, but oth
             x0 /= torch.norm(x0)
 ```
 
-Now, we need to make the $\textbf{a}$ vector to make $P$ stochastic and all. We know that every row that we've entered numbers into is already stochastic - thus, we just need to check for rows of all 0s. 
+We need to make the $\textbf{a}$ vector to make $P$ stochastic. We know that every row that we've entered numbers into is already stochastic - thus, we just need to check for rows of all 0s. 
 
 ```
             stochastic_rows = torch.sparse.sum(self.P,1).indices()
@@ -312,8 +307,6 @@ OMGG here we go!
 
             #x = x0.squeeze()
             return x.squeeze()
-
-
 ```
 
 Let's test it!! 
@@ -392,7 +385,6 @@ So every single webpage in the domain links to the Snowden article,
 and our "anti-spam" `--filter-ratio` argument removed this article from the list.
 In general, it is a challenging open problem to remove spam from pagerank results,
 and all current solutions rely on careful human tuning and still have lots of false positives and false negatives.
-
 
 **Searching with key words:**
 
@@ -508,11 +500,6 @@ $\textbf{x}^{(k)T} =$
 
 $(\alpha \textbf{x}^{(k-1)T})P$ +  
 $[(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$
-
-
-
-'re about to change things up a bit more at the math level now
-
 
 
 The most interesting applications of pagerank involve the personalization vector.
