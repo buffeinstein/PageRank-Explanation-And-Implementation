@@ -70,7 +70,7 @@ class WebGraph():
         i = torch.LongTensor(indices).t()
         v = torch.FloatTensor(values)
         n = len(self.url_dict)
-        self.P = torch.sparse.FloatTensor(i, v, torch.Size([n,n]))
+        self.P = torch.sparse_coo_tensor(i, v, torch.Size([n,n]))
         self.index_dict = {v: k for k, v in self.url_dict.items()}
     
 
@@ -134,19 +134,23 @@ class WebGraph():
                 x0 = torch.unsqueeze(x0,1)
             x0 /= torch.norm(x0)
 
+            stochastic_rows = torch.sparse.sum(self.P,1).indices()
+            a = torch.ones([n,1])
+            a[stochastic_rows]= 0
             # main loop
             xprev = x0
             x = xprev.detach().clone()
             for i in range(max_iterations):
                 xprev = x.detach().clone()
-
-                # compute the new x vector using Eq (5.1)
-                # FIXME: Task 1
-                # HINT: this can be done with a single call to the `torch.sparse.addmm` function,
-                # but you'll have to read the code above to figure out what variables should get passed to that function
-                # and what pre/post processing needs to be done to them
-
-                # output debug information
+                addend = (alpha * x.t() @ a + (1 - alpha)) * v.t()
+                x = torch.sparse.addmm(
+                    addend.t(),          
+                    self.P.t(), 
+                    x,             
+                    beta=1,
+                    alpha=alpha
+                )       
+                x /= torch.norm(x)
                 residual = torch.norm(x-xprev)
                 logging.debug(f'i={i} residual={residual}')
 
@@ -156,7 +160,6 @@ class WebGraph():
 
             #x = x0.squeeze()
             return x.squeeze()
-
 
     def search(self, pi, query='', max_results=10):
         '''

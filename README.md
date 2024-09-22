@@ -362,7 +362,12 @@ The `--filter_ratio` parameter causes the code to remove all pages that have an 
             indices = new_indices
 ```
 
-Let's use the filter ratio parameter, with a chosen ratio cap of 0.2:
+Let's use the filter ratio parameter, with a chosen ratio cap of 0.2. The command to run: 
+```
+python3 pagerank.py --data=data/lawfareblog.csv.gz --filter_ratio=0.2
+```
+
+which yields these results: 
 ```
 % python3 pagerank.py --data=data/lawfareblog.csv.gz --filter_ratio=0.2
 INFO:root:rank=0 pagerank=3.4697e-01 url=www.lawfareblog.com/trump-asks-supreme-court-stay-congressional-subpeona-tax-returns
