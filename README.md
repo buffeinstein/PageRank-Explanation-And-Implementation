@@ -299,14 +299,15 @@ OMGG here we go!
             x = xprev.detach().clone()
             for i in range(max_iterations):
                 xprev = x.detach().clone()
-
-                # compute the new x vector using Eq (5.1)
-                # FIXME: Task 1
-                # HINT: this can be done with a single call to the `torch.sparse.addmm` function,
-                # but you'll have to read the code above to figure out what variables should get passed to that function
-                # and what pre/post processing needs to be done to them
-
-                # output debug information
+                addend = (alpha * x.t() @ a + (1 - alpha)) * v.t()
+                x = torch.sparse.addmm(
+                    addend.t(),          
+                    self.P.t(), 
+                    x,             
+                    beta=1,
+                    alpha=alpha
+                )       
+                x /= torch.norm(x)
                 residual = torch.norm(x-xprev)
                 logging.debug(f'i={i} residual={residual}')
 
