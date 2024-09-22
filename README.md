@@ -496,15 +496,11 @@ A weight of $\alpha$ = 0.99 means we have strong faith that the hyperlink struct
 
 When the user gives a word-search query, we can implement that information by adjusting $(1-\alpha)e\frac{e^T}{n}$ to be $(1-\alpha)ev^T$, so that our PageRank algorithm is now 
 
-$$ \overline{\overline{P}} = \alpha(\overline{P}) +  (1-\alpha)ev^T$$. 
+$$ \overline{\overline{P}} = \alpha(\overline{P}) +  (1-\alpha)ev^T$$
 
-We're no longer assuming that they will teleport randomly! Instead, they wil
+We're no longer assuming that they will teleport randomly! Instead, we'll assume they teleport based on what they're looking for, ie we'll use their word-search query to create $v^T$. 
 
-
-
-The most interesting applications of pagerank involve the personalization vector.
-Implement the `WebGraph.make_personalization_vector` function so that it outputs a personalization vector tuned for the input query.
-The pseudocode for the function is:
+Our story in the code: 
 ```
 for each index in the personalization vector:
     get the url for the index (see the _index_to_url function)
@@ -512,6 +508,19 @@ for each index in the personalization vector:
     if so, set the corresponding index to one
 normalize the vector
 ```
+
+which becomes
+
+```
+            for i in range(0, n):
+                url = self._index_to_url(i)
+                if url_satisfies_query(url, query):
+                    v[i] = 1
+
+        assert(torch.sum(v)>0)
+        v /= v_sum
+```
+
 **Comparing personalization vector to search query**
 
 The command line argument `--personalization_vector_query` will use the function you created above to augment your search with a custom personalization vector.
