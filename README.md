@@ -477,16 +477,29 @@ If large alphas are good for your application, you can see that there is a trade
 
 ## The personalization vector! 
 
-There is another adjustment we can make to our searches, at the equation level - a deeper change than just changing the alpha's value or filtering the results after the math with a word-match search. 
+There is another adjustment we can make to our searches, at the equation level - a deeper change than just changing the alpha's value or filtering the results after the math with a word-match search. We're going to create a personalized vector based on the user's key word search $v^T$
 
-**Thinking about the math again**
+The PageRank algorithm: 
+- has the goal of returning the most useful sites
+- it tries to gauge what is most "useful" to users by finding sites that have the highest probability of being visited 
+- it assumings a correlation between  the amount of times a site is hyperlinked in other sites and the probability of a user visiting that site
+- that again is assuming that users click on hyperlinks all the time with equal prefererence to any hyperlink within a site.
+- 
 
+How does these assumptions and this story about user activity show up in your equation? Let's use an **equivalent version of equation 5.1** that's written in a different way to highlight that story.
 
-Let's not think too much about the math of eigenvectors, and instead try to zoom out think of this as websites and users, and how modeling people's activity with Markov Chains works. 
+$$ \overline{\overline{P}} = \alpha(\overline{P}) +  (1-\alpha)e\frac{e^T}{n}$$
 
-The PageRank vector is trying to estimate what the best websites are to return to a user - it estimates that by calculating sites that have the highest probability of being visited - its assuming a correlation between the probability of a user visiting the sites with the amount of times a site is hyperlinked in other sites - that again is assuming that users click on hyperlinks all the time with equal prefererence to any hyperlink within a site.
+If $\overline{P}$ is the transition matrix representing users clicking on hyperlinks to go to their next site, then $\frac{e}{n}e^T$ represents the probability that they break out of the hyperlink structure and search again - also called the "teleportion probability". The vector $\frac{e^T}{n}$ in the teleportation probability addend is representing our assumption that the user will randomly teleport to any site. 
 
-How does these assumptions and this story about user activity show up in your equation? Let's use an **equivalent version of equation 5.1** that's written in a different way to highlight that story: 
+A weight of $\alpha$ = 0.99 means we have strong faith that the hyperlink structure is the best model for prediction, and a lower value like $\alpha = 0.85$ means we think that 15% of the time, the user will teleport instead of go through hyperlinks.  
+
+When the user gives a word-search query, we can implement that information by adjusting $(1-\alpha)e\frac{e^T}{n}$ to be $(1-\alpha)ev^T$, so that our PageRank algorithm is now 
+
+$$ \overline{\overline{P}} = \alpha(\overline{P}) +  (1-\alpha)ev^T$$. 
+
+We're no longer assuming that they will teleport randomly! Instead, they wil
+
 
 
 The most interesting applications of pagerank involve the personalization vector.
