@@ -796,6 +796,7 @@ INFO:root:rank=7 pagerank=1.4958e-01 url=www.lawfareblog.com/todays-headlines-an
 INFO:root:rank=8 pagerank=1.4367e-01 url=www.lawfareblog.com/cyberlaw-podcast-mistrusting-google
 INFO:root:rank=9 pagerank=1.4240e-01 url=www.lawfareblog.com/lawfare-podcast-bonus-edition-gordon-sondland-vs-committee-no-bull
 ```
+```
 atiwari@Ambikas-Laptop PageRank-Explanation-And-Implementation % python3 pagerank.py --data=data/lawfareblog.csv.gz --verbose --filter_ratio=0.2 --alpha=0.99999
 DEBUG:root:computing indices
 DEBUG:root:computing values
