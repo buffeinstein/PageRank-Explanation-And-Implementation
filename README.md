@@ -219,7 +219,7 @@ We're using the power method in equation 5.1 to find the eigenvector, ie the Pag
 
 $$ \textbf{x}^{(k)T} = (\alpha \textbf{x}^{(k-1)T})P +  [(\alpha \textbf{x}^{(k-1)T})\textbf{a} + (1 - \alpha)]\textbf{v}^T$$ 
 
-We iteratively run this equation 
+We iteratively run this equation until $x^{(k)T} ~ x^{(k-1)T}$.
 
 We're going to create a function with these inputs: 
 
