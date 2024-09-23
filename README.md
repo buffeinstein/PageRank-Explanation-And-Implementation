@@ -584,7 +584,34 @@ but a simple keyword search for corona or related terms would not find these art
 
 ## Runtime analysis
 
-ok ya ill see if i do this section or not 
+Let's look the runtime of **one run** of Eq 5.1: 
+
+$$ x^{(k)T} =  \alpha x^{(k-1)T} P + (\alpha x^{(k-1)T} a +  (1 - \alpha))v^T$$
+
+ Let's analyze one addend at a time, starting with 
+ 
+$$(a x^{(k-1)T} ) \cdot P$$ 
+
+Breaking that up again, we see that $a x^{(k-1)T}$ is scalar multiplication of a $1$ x $n$ matrix which is in $\Theta(n)$ time. 
+        
+Thus, we have a vector-multiplication matrix with $a x^{(k-1)T} \cdot P$. Vector-matrix manipulation takes $O(nnz(P))$ FLOPS (floating point operations) - with $P$ being a sparse matrix, $O(nnz(P)) = O(n)$. 
+
+Thus, $a x^{(k-1)T} \cdot P$ has an overall runtime $O(n)$.  
+        
+Now for the second addend:  
+
+$$(\alpha x^{(k-1)T} a +  (1 - \alpha))v^T$$ 
+        
+Let's look at the coefficient $(\alpha x^{(k-1)T} a +  (1 - \alpha))$. 
+The $x^{(k-1)T} a$ is an inner product in $O(n)$ time and outputs a scalar. Then, $(\alpha x^{(k-1)T} a$ is multiplication of 2 scalars in $O(1)$ time and outputs a scalar. Continuing, 
+$\alpha x^{(k-1)T} a +  (1 - \alpha))$ is addition of two scalars in $O(1)$ time and outputs a scalar. 
+
+Thus, the coefficient is a scalar, and $(\alpha x^{(k-1)T} a +  (1 - \alpha))v^T$ is scalar multiplication of a vector in $O(n)$ time. 
+
+The sum of all these run-times, and therefore the runtime of **one run** of the PageRank Power Method algorithm with, is $O(n)$! 
+
+Recall that we iteratively use equation 5.1 until $x^{(k-1)T} has a norm that differs by a very small value $\epsilon$ (epsilon) from $x^{(k)T}'s norm. We use the heuristic definition that it will take $k$ iterations where $\epsilon = \alpha^k$. 
+       
 ## THE END
 
 What a journey. Hope y'all enjoyed!
