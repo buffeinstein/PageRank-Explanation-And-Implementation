@@ -584,6 +584,8 @@ but a simple keyword search for corona or related terms would not find these art
 
 ## Runtime analysis
 
+One might wonder why we're not directly using SciPy's built in eigenvector function to find the PageRank vector directly. Unintuitively (at least for me), the Power Method is faster. Let's compare the runtimes! 
+
 Let's look the runtime of **one run** of Eq 5.1: 
 
 $$ x^{(k)T} =  \alpha x^{(k-1)T} P + (\alpha x^{(k-1)T} a +  (1 - \alpha))v^T$$
@@ -610,8 +612,10 @@ Thus, the coefficient is a scalar, and $(\alpha x^{(k-1)T} a +  (1 - \alpha))v^T
 
 The sum of all these run-times, and therefore the runtime of **one run** of the PageRank Power Method algorithm with, is $O(n)$! 
 
-Recall that we iteratively use equation 5.1 until $x^{(k-1)T} has a norm that differs by a very small value $\epsilon$ (epsilon) from $x^{(k)T}'s norm. We use the heuristic definition that it will take $k$ iterations where $\epsilon = \alpha^k$. 
-       
+Recall that we iteratively use equation 5.1 until $x^{(k-1)T}$ has a norm that differs by a very small value $\epsilon$ (usually $10^{-6}$) from $x^{(k)T}$'s norm. We use the heuristic definition that it will take $k$ iterations where $\epsilon = \alpha^k$. Thus, $k = \frac{log \epsilon}{log \alpha}$, and the total runtime of using the PageRank algorithm to find the PageRank vector is: $O(\frac{log \epsilon}{log \alpha} n)$. 
+
+The runtime of built in eigenvector-finding functions if $O(n^3)$. There's no competition. 
+
 ## THE END
 
 What a journey. Hope y'all enjoyed!
