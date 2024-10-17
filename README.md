@@ -4,7 +4,7 @@ In this project, I created a simple search engine for the website <https://www.l
 
 This project is an exploration of the math concepts in the *Deeper Inside Pagerank* paper (added in this repo). The paper picks up after Sergey Brin and Larry Page's original 1998 paper detailing the algorithm that remains "the heart of [Google’s] software ... and continues to provide the basis for all of [their] web search tools”(http://www.google.com/technology/index.html).
 
-The relevant math for my code is in sections 3 and 5. If this is your first time with Markov Chains, I recommend the first three videos in this short and simple youtube series: https://www.youtube.com/playlist?list=PLM8wYQRetTxBkdvBtz-gw8b9lcVkdXQKV
+The relevant math for my code is in sections 3 and 5 of the paper. If this is your first time with Markov Chains, I recommend the first three videos in this short and simple youtube series: https://www.youtube.com/playlist?list=PLM8wYQRetTxBkdvBtz-gw8b9lcVkdXQKV
 
 To summarize the math below: we're creating a web graph of sites as nodes and hyperlinks to create edges. Then, we create the corresponding adjacency matrix (ie P in the paper) and find its eigenvector (the stationary vector of a Markov chain). This stationary vector represents the distribution of the probability of visiting a site after an infinite random walk along the Markov chain. The sites with the highest probability of being visited are most likely to be useful to the user, and therefore, will be returned first! 
 
